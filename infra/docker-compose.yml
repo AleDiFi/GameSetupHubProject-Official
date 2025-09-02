@@ -1,0 +1,54 @@
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  user-service:
+    build:
+      context: ../users_service
+    ports:
+      - "8001:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+
+  configs-service:
+    build:
+      context: ../configs_service
+    ports:
+      - "8002:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+
+  visualizations-service:
+    build:
+      context: ../visualizations_service
+    ports:
+      - "8003:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+      - CONFIGS_SERVICE_URL=http://configs-service:8000
+      - USERS_SERVICE_URL=http://user-service:8000
+    depends_on:
+      - mongo
+      - user-service
+      - configs-service
+
+  valutations-service:
+    build:
+      context: ../valutation_service
+    ports:
+      - "8004:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+      - JWT_SECRET_KEY=supersegreto123
+    depends_on:
+      - mongo
+      - user-service
+      - configs-service
+
+volumes:
+  mongo_data:

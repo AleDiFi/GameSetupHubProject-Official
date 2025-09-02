@@ -1,0 +1,2 @@
+Per Creare le immagini di tutti i servizi specificati nel file yml docker-compose:
+docker-compose up --build
