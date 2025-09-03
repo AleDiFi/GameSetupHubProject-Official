@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carica Configurazione - Game Config Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-gamepad me-2"></i>
+                Game Config Hub
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="configurations.html">Configurazioni</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="search.html">Ricerca</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="upload.html">Carica Config</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav" id="navbar-user">
+                    <!-- Dinamicamente popolato da JS -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="upload-header">
+                    <h2 class="text-gradient">
+                        <i class="fas fa-upload me-2"></i>
+                        Carica Nuova Configurazione
+                    </h2>
+                    <p class="lead">Condividi le tue configurazioni di gioco con la community</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="upload-card">
+                    <form id="uploadForm">
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informazioni di Base
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="configTitle" class="form-label">
+                                            <i class="fas fa-heading me-1"></i>
+                                            Titolo *
+                                        </label>
+                                        <input type="text" class="form-control" id="configTitle" required 
+                                               placeholder="Es: Build DPS per Boss Raids">
+                                        <div class="form-text">Nome identificativo per la tua configurazione</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="configGame" class="form-label">
+                                            <i class="fas fa-gamepad me-1"></i>
+                                            Gioco *
+                                        </label>
+                                        <input type="text" class="form-control" id="configGame" required 
+                                               placeholder="Es: World of Warcraft" list="popularGames">
+                                        <datalist id="popularGames">
+                                            <option value="World of Warcraft">
+                                            <option value="League of Legends">
+                                            <option value="Counter-Strike 2">
+                                            <option value="Valorant">
+                                            <option value="Apex Legends">
+                                            <option value="Fortnite">
+                                            <option value="Minecraft">
+                                            <option value="Call of Duty">
+                                            <option value="Cyberpunk 2077">
+                                            <option value="The Witcher 3">
+                                        </datalist>
+                                        <div class="form-text">Nome del gioco per cui stai caricando la configurazione</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="configDescription" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>
+                                    Descrizione
+                                </label>
+                                <textarea class="form-control" id="configDescription" rows="4"
+                                          placeholder="Descrivi la tua configurazione: a cosa serve, come usarla, perché è efficace..."></textarea>
+                                <div class="form-text">Spiega il scopo e l'utilizzo della configurazione</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="configTags" class="form-label">
+                                    <i class="fas fa-tags me-1"></i>
+                                    Tags
+                                </label>
+                                <input type="text" class="form-control" id="configTags" 
+                                       placeholder="Es: DPS, PvP, Raid, Tank...">
+                                <div class="form-text">
+                                    Separa i tag con virgole. Aiutano altri utenti a trovare la tua configurazione.
+                                </div>
+                                <div id="tagPreview" class="mt-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Parameters -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-cogs me-2"></i>
+                                Parametri di Configurazione
+                            </h4>
+                            <p class="text-muted mb-3">
+                                Inserisci i parametri della tua configurazione. Puoi usare JSON per dati strutturati.
+                            </p>
+
+                            <div class="mb-3">
+                                <div class="config-input-tabs">
+                                    <ul class="nav nav-tabs" id="configInputTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="simple-tab" data-bs-toggle="tab" 
+                                                    data-bs-target="#simple" type="button" role="tab">
+                                                <i class="fas fa-edit me-1"></i>
+                                                Input Semplice
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="json-tab" data-bs-toggle="tab" 
+                                                    data-bs-target="#json" type="button" role="tab">
+                                                <i class="fas fa-code me-1"></i>
+                                                JSON Avanzato
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="tab-content" id="configInputContent">
+                                    <!-- Simple Input Tab -->
+                                    <div class="tab-pane fade show active" id="simple" role="tabpanel">
+                                        <div class="simple-config-container">
+                                            <div id="parametersList">
+                                                <!-- Parameters will be added dynamically -->
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                    onclick="uploadPage.addParameter()">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Aggiungi Parametro
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- JSON Input Tab -->
+                                    <div class="tab-pane fade" id="json" role="tabpanel">
+                                        <div class="json-config-container">
+                                            <textarea class="form-control json-editor" id="configParametersJson" 
+                                                      rows="10" placeholder='{\n  "esempio": "valore",\n  "numero": 123,\n  "lista": ["item1", "item2"]\n}'></textarea>
+                                            <div class="json-validation" id="jsonValidation"></div>
+                                            <small class="form-text text-muted">
+                                                Inserisci un JSON valido con i parametri della configurazione
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="form-section" id="previewSection" style="display: none;">
+                            <h4 class="section-title">
+                                <i class="fas fa-eye me-2"></i>
+                                Anteprima Configurazione
+                            </h4>
+                            <div class="config-preview" id="configPreview">
+                                <!-- Preview will be generated here -->
+                            </div>
+                        </div>
+
+                        <!-- Submit Section -->
+                        <div class="form-section">
+                            <div class="submit-actions">
+                                <div class="d-flex gap-3 justify-content-end flex-wrap">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="uploadPage.clearForm()">
+                                        <i class="fas fa-times me-1"></i>
+                                        Cancella
+                                    </button>
+                                    <button type="button" class="btn btn-info" onclick="uploadPage.showPreview()">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Anteprima
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-upload me-1"></i>
+                                        Carica Configurazione
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Sidebar -->
+            <div class="col-lg-4">
+                <div class="tips-card">
+                    <h5 class="tips-title">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Suggerimenti
+                    </h5>
+                    
+                    <div class="tip-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div>
+                            <strong>Titolo descrittivo</strong>
+                            <p>Usa un titolo che descriva chiaramente l'obiettivo della configurazione</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div>
+                            <strong>Tags utili</strong>
+                            <p>Aggiungi tag rilevanti come "PvP", "PvE", "DPS", "Tank", "Healer"</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div>
+                            <strong>Descrizione dettagliata</strong>
+                            <p>Spiega come e quando usare la configurazione per aiutare altri giocatori</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div>
+                            <strong>Parametri chiari</strong>
+                            <p>Organizza i parametri in modo logico e aggiungi commenti quando necessario</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Tags -->
+                <div class="popular-tags-card mt-3">
+                    <h6>Tags Popolari</h6>
+                    <div class="popular-tags">
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('PvP')">PvP</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('PvE')">PvE</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('DPS')">DPS</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Tank')">Tank</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Healer')">Healer</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Raid')">Raid</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Dungeon')">Dungeon</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Beginner')">Beginner</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Advanced')">Advanced</span>
+                        <span class="tag-suggestion" onclick="uploadPage.addTag('Meta')">Meta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login Richiesto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Devi essere loggato per caricare una configurazione.</p>
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <p class="text-center">Non hai un account? <a href="#" onclick="showRegisterModal()">Registrati</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Registrati</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/upload.js"></script>
+</body>
+</html>

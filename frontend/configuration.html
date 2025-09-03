@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dettaglio Configurazione - Game Config Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-gamepad me-2"></i>
+                Game Config Hub
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="configurations.html">Configurazioni</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="search.html">Ricerca</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="upload.html">Carica Config</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav" id="navbar-user">
+                    <!-- Dinamicamente popolato da JS -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Loading State -->
+        <div id="configLoading" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Caricamento configurazione...</span>
+            </div>
+            <p class="loading-text">Caricamento dettagli configurazione...</p>
+        </div>
+
+        <!-- Configuration Content -->
+        <div id="configContent" style="display: none;">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item"><a href="configurations.html">Configurazioni</a></li>
+                    <li class="breadcrumb-item active" id="breadcrumbTitle">Dettaglio</li>
+                </ol>
+            </nav>
+
+            <!-- Configuration Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="config-detail-header">
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <h1 class="config-detail-title" id="configTitle">Caricamento...</h1>
+                                <div class="config-detail-meta">
+                                    <span class="config-game" id="configGame">
+                                        <i class="fas fa-gamepad me-1"></i>
+                                        Caricamento...
+                                    </span>
+                                    <span class="config-date" id="configDate">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Caricamento...
+                                    </span>
+                                    <span class="config-author" id="configAuthor">
+                                        <i class="fas fa-user me-1"></i>
+                                        Caricamento...
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 text-lg-end">
+                                <div class="config-actions">
+                                    <button class="btn btn-outline-primary" onclick="configDetail.shareConfiguration()">
+                                        <i class="fas fa-share me-2"></i>
+                                        Condividi
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="configDetail.downloadConfiguration()">
+                                        <i class="fas fa-download me-2"></i>
+                                        Scarica
+                                    </button>
+                                    <div class="btn-group">
+                                        <button class="btn btn-primary" onclick="configDetail.likeConfiguration()" id="likeBtn">
+                                            <i class="fas fa-heart me-1"></i>
+                                            <span id="likeText">Mi Piace</span>
+                                        </button>
+                                        <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" 
+                                                data-bs-toggle="dropdown">
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="configDetail.showRatingModal()">
+                                                <i class="fas fa-star me-2"></i>Valuta
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#comments">
+                                                <i class="fas fa-comment me-2"></i>Commenta
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="row">
+                <!-- Left Column - Main Details -->
+                <div class="col-lg-8">
+                    <!-- Description -->
+                    <div class="config-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-align-left me-2"></i>
+                            Descrizione
+                        </h3>
+                        <div class="section-content">
+                            <p id="configDescription" class="description-text">Caricamento descrizione...</p>
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="config-section mb-4" id="tagsSection" style="display: none;">
+                        <h3 class="section-title">
+                            <i class="fas fa-tags me-2"></i>
+                            Tags
+                        </h3>
+                        <div class="section-content">
+                            <div id="configTags" class="tags-container">
+                                <!-- Tags dinamici -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parameters -->
+                    <div class="config-section mb-4">
+                        <h3 class="section-title">
+                            <i class="fas fa-cogs me-2"></i>
+                            Parametri di Configurazione
+                        </h3>
+                        <div class="section-content">
+                            <div class="parameters-container">
+                                <div class="parameters-toolbar mb-3">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" 
+                                                onclick="configDetail.switchParametersView('formatted')" id="formattedViewBtn">
+                                            <i class="fas fa-eye me-1"></i>
+                                            Vista Formattata
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" 
+                                                onclick="configDetail.switchParametersView('raw')" id="rawViewBtn">
+                                            <i class="fas fa-code me-1"></i>
+                                            JSON Raw
+                                        </button>
+                                    </div>
+                                    <button class="btn btn-outline-secondary ms-2" onclick="configDetail.copyParameters()">
+                                        <i class="fas fa-copy me-1"></i>
+                                        Copia
+                                    </button>
+                                </div>
+                                <div id="parametersContent">
+                                    <!-- Parametri dinamici -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="config-section" id="comments">
+                        <h3 class="section-title">
+                            <i class="fas fa-comments me-2"></i>
+                            Commenti
+                            <span class="comments-count" id="commentsCount">(0)</span>
+                        </h3>
+                        <div class="section-content">
+                            <!-- Add Comment Form -->
+                            <div class="add-comment-form" id="addCommentForm" style="display: none;">
+                                <form id="commentForm">
+                                    <div class="mb-3">
+                                        <textarea class="form-control" id="commentText" rows="3" 
+                                                  placeholder="Scrivi un commento..."></textarea>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-secondary" onclick="configDetail.cancelComment()">
+                                            Annulla
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-1"></i>
+                                            Invia Commento
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Comments List -->
+                            <div id="commentsList">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nessun commento ancora.</p>
+                                    <button class="btn btn-outline-primary" onclick="configDetail.showCommentForm()">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Aggiungi il primo commento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Statistics -->
+                    <div class="sidebar-card mb-4">
+                        <h5 class="sidebar-title">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Statistiche
+                        </h5>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="viewsCount">-</div>
+                                <div class="stat-label">Visualizzazioni</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="likesCount">-</div>
+                                <div class="stat-label">Mi Piace</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="ratingsCount">-</div>
+                                <div class="stat-label">Valutazioni</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="avgRating">-</div>
+                                <div class="stat-label">Media Voti</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Author Info -->
+                    <div class="sidebar-card mb-4" id="authorCard">
+                        <h5 class="sidebar-title">
+                            <i class="fas fa-user me-2"></i>
+                            Autore
+                        </h5>
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                <i class="fas fa-user-circle fa-3x text-primary"></i>
+                            </div>
+                            <div class="author-details">
+                                <h6 id="authorName">Caricamento...</h6>
+                                <p class="text-muted" id="authorEmail">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Related Configurations -->
+                    <div class="sidebar-card">
+                        <h5 class="sidebar-title">
+                            <i class="fas fa-list me-2"></i>
+                            Configurazioni Correlate
+                        </h5>
+                        <div id="relatedConfigs">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Caricamento...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="configError" style="display: none;">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Configurazione non trovata
+                </h4>
+                <p>La configurazione richiesta non è stata trovata o non è più disponibile.</p>
+                <hr>
+                <div class="d-flex gap-2">
+                    <a href="configurations.html" class="btn btn-primary">
+                        <i class="fas fa-list me-2"></i>
+                        Vedi Tutte le Configurazioni
+                    </a>
+                    <a href="search.html" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-2"></i>
+                        Cerca Configurazioni
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div class="modal fade" id="ratingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Valuta questa Configurazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ratingForm">
+                        <div class="text-center mb-4">
+                            <h6>Seleziona la tua valutazione:</h6>
+                            <div class="rating-input" id="ratingInput">
+                                <i class="fas fa-star rating-star" data-rating="1"></i>
+                                <i class="fas fa-star rating-star" data-rating="2"></i>
+                                <i class="fas fa-star rating-star" data-rating="3"></i>
+                                <i class="fas fa-star rating-star" data-rating="4"></i>
+                                <i class="fas fa-star rating-star" data-rating="5"></i>
+                            </div>
+                            <p class="mt-2">
+                                <span id="ratingText">Clicca su una stella</span>
+                            </p>
+                        </div>
+                        <input type="hidden" id="selectedRating" value="0">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" disabled id="submitRating">
+                                <i class="fas fa-star me-2"></i>
+                                Invia Valutazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modals -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login Richiesto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Devi essere loggato per interagire con le configurazioni.</p>
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <p class="text-center">Non hai un account? <a href="#" onclick="showRegisterModal()">Registrati</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Registrati</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/configuration-detail.js"></script>
+</body>
+</html>

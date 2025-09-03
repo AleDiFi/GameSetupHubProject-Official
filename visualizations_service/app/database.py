@@ -8,6 +8,6 @@ db = client.gamesetuphub
 
 # Collections
 configurations_collection = db.configs
-ratings_collection = db.ratings
+ratings_collection = db.valutations
 comments_collection = db.comments
 users_collection = db.users

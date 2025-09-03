@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ricerca Avanzata - Game Config Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-gamepad me-2"></i>
+                Game Config Hub
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="configurations.html">Configurazioni</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="search.html">Ricerca</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="upload.html">Carica Config</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav" id="navbar-user">
+                    <!-- Dinamicamente popolato da JS -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="search-header">
+                    <h2 class="text-gradient">
+                        <i class="fas fa-search me-2"></i>
+                        Ricerca Avanzata
+                    </h2>
+                    <p class="lead">Trova le configurazioni perfette per il tuo stile di gioco</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Form -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="search-container">
+                    <form id="searchForm">
+                        <!-- Basic Search -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="searchQuery" class="form-label">
+                                    <i class="fas fa-search me-1"></i>
+                                    Cerca Configurazioni
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="searchQuery" 
+                                       placeholder="Cerca per titolo, gioco, descrizione...">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-search me-2"></i>
+                                    Cerca
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Filters -->
+                        <div class="advanced-filters" id="advancedFilters">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="gameFilter" class="form-label">
+                                        <i class="fas fa-gamepad me-1"></i>
+                                        Gioco
+                                    </label>
+                                    <input type="text" class="form-control" id="gameFilter" 
+                                           placeholder="Nome del gioco" list="gamesList">
+                                    <datalist id="gamesList">
+                                        <!-- Popolato dinamicamente -->
+                                    </datalist>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="tagsFilter" class="form-label">
+                                        <i class="fas fa-tags me-1"></i>
+                                        Tags
+                                    </label>
+                                    <input type="text" class="form-control" id="tagsFilter" 
+                                           placeholder="PvP, Raid, DPS..." list="tagsList">
+                                    <datalist id="tagsList">
+                                        <!-- Popolato dinamicamente -->
+                                    </datalist>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="sortField" class="form-label">
+                                        <i class="fas fa-sort me-1"></i>
+                                        Ordina per
+                                    </label>
+                                    <select class="form-select" id="sortField">
+                                        <option value="created_at">Data creazione</option>
+                                        <option value="title">Titolo</option>
+                                        <option value="game">Gioco</option>
+                                        <option value="rating">Valutazione</option>
+                                        <option value="popularity">Popolarità</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="sortOrder" class="form-label">
+                                        <i class="fas fa-sort-amount-down me-1"></i>
+                                        Ordine
+                                    </label>
+                                    <select class="form-select" id="sortOrder">
+                                        <option value="desc">Decrescente</option>
+                                        <option value="asc">Crescente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <label for="limitResults" class="form-label">
+                                        <i class="fas fa-list me-1"></i>
+                                        Risultati per pagina
+                                    </label>
+                                    <select class="form-select" id="limitResults">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-star me-1"></i>
+                                        Valutazione minima
+                                    </label>
+                                    <div class="rating-filter">
+                                        <input type="range" class="form-range" id="minRating" 
+                                               min="0" max="5" step="0.5" value="0">
+                                        <div class="rating-display">
+                                            <span id="ratingValue">Tutte</span>
+                                            <div id="ratingStars"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" class="btn btn-outline-secondary w-100" 
+                                            onclick="searchPage.clearFilters()">
+                                        <i class="fas fa-times me-2"></i>
+                                        Reset Filtri
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-outline-primary" id="toggleAdvanced">
+                                <i class="fas fa-chevron-down me-1"></i>
+                                Filtri Avanzati
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Search Tags -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="quick-search-container">
+                    <h6 class="mb-3">
+                        <i class="fas fa-fire me-2"></i>
+                        Ricerche Popolari
+                    </h6>
+                    <div class="quick-search-tags" id="quickSearchTags">
+                        <span class="quick-tag" onclick="searchPage.quickSearch('PvP')">PvP</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Raid')">Raid</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('DPS')">DPS</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Tank')">Tank</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Healer')">Healer</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('World of Warcraft')">WoW</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('League of Legends')">LoL</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Beginner')">Beginner</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Meta')">Meta</span>
+                        <span class="quick-tag" onclick="searchPage.quickSearch('Advanced')">Advanced</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Search Stats -->
+                <div class="search-stats" id="searchStats" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="results-count">
+                                <i class="fas fa-search me-1"></i>
+                                <span id="resultsCount">0</span> risultati trovati
+                            </span>
+                            <span class="search-time text-muted ms-2">
+                                in <span id="searchTime">0</span>ms
+                            </span>
+                        </div>
+                        <div class="view-toggle">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary active" 
+                                        onclick="searchPage.switchView('grid')" id="gridViewBtn">
+                                    <i class="fas fa-th"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" 
+                                        onclick="searchPage.switchView('list')" id="listViewBtn">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="searchLoading" class="loading-spinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Ricerca in corso...</span>
+                    </div>
+                    <p class="loading-text">Ricerca configurazioni...</p>
+                </div>
+
+                <!-- Results Container -->
+                <div id="searchResults" class="search-results">
+                    <!-- Initial State -->
+                    <div class="search-initial-state">
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">Inizia la tua ricerca</h4>
+                            <p class="text-muted">
+                                Usa la barra di ricerca sopra per trovare configurazioni<br>
+                                o clicca su uno dei tag popolari
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <nav id="searchPagination" style="display: none;">
+                    <ul class="pagination justify-content-center mt-4" id="paginationList">
+                        <!-- Paginazione dinamica -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Detail Modal -->
+    <div class="modal fade" id="configDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configDetailTitle">Dettagli Configurazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="configDetailBody">
+                    <!-- Contenuto dinamico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                    <button type="button" class="btn btn-primary" id="viewFullConfigBtn">
+                        <i class="fas fa-external-link-alt me-2"></i>
+                        Vista Completa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <p class="text-center">Non hai un account? <a href="#" onclick="showRegisterModal()">Registrati</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Registrati</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/search.js"></script>
+</body>
+</html>

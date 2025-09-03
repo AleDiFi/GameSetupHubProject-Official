@@ -49,6 +49,17 @@ services:
       - mongo
       - user-service
       - configs-service
+  
+  frontend:
+    build:
+      context: ../frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - user-service
+      - configs-service
+      - visualizations-service
+      - valutations-service
 
 volumes:
   mongo_data:

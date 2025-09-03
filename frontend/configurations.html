@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurazioni - Game Config Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-gamepad me-2"></i>
+                Game Config Hub
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="configurations.html">Configurazioni</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="search.html">Ricerca</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="upload.html">Carica Config</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav" id="navbar-user">
+                    <!-- Dinamicamente popolato da JS -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2>
+                            <i class="fas fa-cog text-primary me-2"></i>
+                            Tutte le Configurazioni
+                        </h2>
+                        <p class="text-muted">Esplora e scopri configurazioni per i tuoi giochi preferiti</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="location.href='upload.html'">
+                            <i class="fas fa-plus me-2"></i>
+                            Nuova Configurazione
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtri -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="filter-card">
+                    <h5 class="filter-title">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtri
+                    </h5>
+                    <form id="filterForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="gameFilter" class="form-label">Gioco</label>
+                                <input type="text" class="form-control" id="gameFilter" placeholder="Nome del gioco...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sortBy" class="form-label">Ordina per</label>
+                                <select class="form-select" id="sortBy">
+                                    <option value="created_at">Data di creazione</option>
+                                    <option value="title">Titolo</option>
+                                    <option value="game">Gioco</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sortOrder" class="form-label">Ordine</label>
+                                <select class="form-select" id="sortOrder">
+                                    <option value="desc">Decrescente</option>
+                                    <option value="asc">Crescente</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-1"></i>
+                                    Filtra
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiche -->
+        <div class="row mb-4" id="stats-section" style="display: none;">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h4 id="total-configs">-</h4>
+                        <p>Totale Configurazioni</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h4 id="unique-games">-</h4>
+                        <p>Giochi Diversi</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h4 id="avg-rating">-</h4>
+                        <p>Valutazione Media</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h4 id="recent-count">-</h4>
+                        <p>Recenti (7 giorni)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Configurazioni -->
+        <div class="row">
+            <div class="col-12">
+                <div class="configurations-container">
+                    <div id="configurations-loading" class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                        <p class="loading-text">Caricamento configurazioni...</p>
+                    </div>
+                    
+                    <div id="configurations-list" style="display: none;">
+                        <!-- Le configurazioni saranno caricate qui dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginazione -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav id="pagination-nav" style="display: none;">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- Paginazione dinamica -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per dettagli configurazione -->
+    <div class="modal fade" id="configModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalTitle">Dettagli Configurazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="configModalBody">
+                    <!-- Contenuto dinamico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                    <button type="button" class="btn btn-primary" id="viewFullConfig">
+                        <i class="fas fa-external-link-alt me-2"></i>
+                        Vista Completa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <p class="text-center">Non hai un account? <a href="#" onclick="showRegisterModal()">Registrati</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Registrati</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/configurations.js"></script>
+</body>
+</html>
