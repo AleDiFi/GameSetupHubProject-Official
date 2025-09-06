@@ -9,6 +9,7 @@ router = APIRouter()
 
 @router.post("/")
 def upload_config(config: ConfigCreate, user=Depends(get_current_user)):
+    # Inizializza alcuni campi con valori neutrali: views a 0; non impostare valutazioni o likes qui
     config_doc = {
         "user_id": user["user_id"],
         "game": config.game,
@@ -17,7 +18,8 @@ def upload_config(config: ConfigCreate, user=Depends(get_current_user)):
         "parameters": config.parameters,
         "tags": config.tags,
         "created_at": datetime.now(),
-        "updated_at": datetime.now()
+        "updated_at": datetime.now(),
+        "views": 0
     }
     result = configs_collection.insert_one(config_doc)
     return {"msg": "Configurazione caricata", "id": str(result.inserted_id)}

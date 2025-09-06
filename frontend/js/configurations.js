@@ -367,8 +367,15 @@ class ConfigurationsPage {
         });
         document.getElementById('recent-count').textContent = recentConfigs.length;
 
-        // Valutazione media (placeholder per ora)
-        document.getElementById('avg-rating').textContent = '4.2★';
+            // Valutazione media reale (se disponibile) oppure fallback
+            const avgEl = document.getElementById('avg-rating');
+            const avg = this.configurations && this.configurations.length > 0
+                ? (this.configurations.reduce((acc, c) => acc + (c.average_rating || 0), 0) / this.configurations.filter(c => c.average_rating !== undefined && c.average_rating !== null).length || 0)
+                : 0;
+            if (avgEl) {
+                const hasAny = this.configurations.some(c => c.average_rating !== undefined && c.average_rating !== null);
+                avgEl.textContent = hasAny ? Number(avg).toFixed(1) + '★' : 'Nessuna valutazione';
+            }
     }
 
     handleFilter(event) {

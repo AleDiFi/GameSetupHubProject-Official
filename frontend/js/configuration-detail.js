@@ -350,10 +350,21 @@ class ConfigurationDetail {
 
     updateStatistics() {
         // Simula alcune statistiche
-        document.getElementById('viewsCount').textContent = Math.floor(Math.random() * 1000) + 50;
-        document.getElementById('likesCount').textContent = Math.floor(Math.random() * 100) + 5;
-        document.getElementById('ratingsCount').textContent = Math.floor(Math.random() * 50) + 2;
-        document.getElementById('avgRating').textContent = (3.5 + Math.random() * 1.5).toFixed(1) + '★';
+        // Usa i dati reali se presenti (provenienti dal service di visualizzazioni), altrimenti fallback sicuro
+        const views = this.configuration.views ?? 0;
+        const likes = this.configuration.likes_count ?? this.configuration.likes ?? 0;
+        const ratingsCount = this.configuration.total_ratings ?? (this.configuration.ratings ? this.configuration.ratings.length : 0) ?? 0;
+        const avg = this.configuration.average_rating ?? null;
+
+        const viewsEl = document.getElementById('viewsCount');
+        const likesEl = document.getElementById('likesCount');
+        const ratingsEl = document.getElementById('ratingsCount');
+        const avgEl = document.getElementById('avgRating');
+
+        if (viewsEl) viewsEl.textContent = String(views);
+        if (likesEl) likesEl.textContent = String(likes);
+        if (ratingsEl) ratingsEl.textContent = String(ratingsCount);
+        if (avgEl) avgEl.textContent = avg !== null && avg !== undefined ? (Number(avg).toFixed(1) + '★') : 'Nessuna valutazione';
     }
 
     async loadComments() {
@@ -404,11 +415,13 @@ class ConfigurationDetail {
         try {
             await apiClient.addComment(this.configId, commentText);
             apiClient.showSuccess('Commento aggiunto con successo!');
-            
-            // Ricarica i commenti
+
+            // Ricarica i dettagli aggiornati (comments incluse)
+            const updated = await apiClient.getConfigurationDetails(this.configId);
+            this.configuration = { ...this.configuration, ...updated };
             this.loadComments();
             this.cancelComment();
-            
+
         } catch (error) {
             apiClient.showError('Errore nell\'aggiunta del commento: ' + error.message);
         } finally {
@@ -444,13 +457,16 @@ class ConfigurationDetail {
         try {
             await apiClient.addRating(this.configId, rating);
             apiClient.showSuccess('Valutazione inviata con successo!');
-            
+
             // Chiudi il modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('ratingModal'));
             modal.hide();
-            
-            // Aggiorna le statistiche
+
+            // Ricarica i dettagli aggiornati (avg, total_ratings, ratings list)
+            const updated = await apiClient.getConfigurationDetails(this.configId);
+            this.configuration = { ...this.configuration, ...updated };
             this.updateStatistics();
+            this.loadComments();
             
         } catch (error) {
             apiClient.showError('Errore nell\'invio della valutazione: ' + error.message);
@@ -475,22 +491,26 @@ class ConfigurationDetail {
         
         try {
             const response = await apiClient.toggleLike(this.configId);
-            
-            if (response.message.includes('added')) {
+
+            // Ricarica i dettagli aggiornati per avere il conteggio reale e lo stato
+            const updated = await apiClient.getConfigurationDetails(this.configId);
+            this.configuration = { ...this.configuration, ...updated };
+            this.updateStatistics();
+
+            // Aggiorna stato del bottone in base ai likes (verifica se l'utente è tra i likes)
+            const userData = authManager.getCurrentUser();
+            const likes = this.configuration.likes || [];
+            const hasLiked = likes.some(l => l.user_id === userData.user_id || l.user_id === userData.id || l.username === userData.username);
+            this.userHasLiked = !!hasLiked;
+            if (this.userHasLiked) {
                 likeText.textContent = 'Ti Piace';
                 likeBtn.classList.remove('btn-primary');
                 likeBtn.classList.add('btn-success');
-                this.userHasLiked = true;
             } else {
                 likeText.textContent = 'Mi Piace';
                 likeBtn.classList.remove('btn-success');
                 likeBtn.classList.add('btn-primary');
-                this.userHasLiked = false;
             }
-            
-            // Aggiorna il conteggio
-            const currentCount = parseInt(document.getElementById('likesCount').textContent);
-            document.getElementById('likesCount').textContent = this.userHasLiked ? currentCount + 1 : currentCount - 1;
             
         } catch (error) {
             apiClient.showError('Errore nell\'operazione: ' + error.message);

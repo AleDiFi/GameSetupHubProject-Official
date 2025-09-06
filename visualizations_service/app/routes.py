@@ -15,11 +15,17 @@ import time
 router = APIRouter()
 
 def calculate_average_rating(config_id: str) -> tuple[Optional[float], int]:
-    """Calcola la valutazione media di una configurazione"""
+    """Calcola la valutazione media di una configurazione (fallback su valutations)"""
     ratings = list(ratings_collection.find({"config_id": config_id}))
+    # fallback: check legacy collection name if no ratings
+    if not ratings:
+        # import db and try legacy collection
+        from .database import db
+        legacy = db.get_collection("valutations")
+        if legacy:
+            ratings = list(legacy.find({"config_id": config_id}))
     if not ratings:
         return None, 0
-    
     total_rating = sum(r["rating"] for r in ratings)
     count = len(ratings)
     average = round(total_rating / count, 2)
@@ -38,9 +44,10 @@ def get_likes_count(config_id: str) -> int:
 
 def enrich_configuration(config: dict) -> ConfigurationView:
     """Arricchisce una configurazione con valutazioni e informazioni utente"""
-    config_id = config["_id"]
+    # Normalizza l'id (potrebbe essere ObjectId o stringa)
+    config_id = str(config.get("_id"))
     
-    # Calcola valutazione media
+    # Calcola valutazione media (None, 0 se non ci sono)
     avg_rating, total_ratings = calculate_average_rating(config_id)
     
     # Conta commenti
@@ -52,19 +59,20 @@ def enrich_configuration(config: dict) -> ConfigurationView:
     # Ottieni informazioni autore
     author_info = get_user_info(config["user_id"])
     
+    # Garantiamo valori coerenti al frontend: average_rating può essere None
     return ConfigurationView(
         id=config_id,
-        game=config["game"],
-        title=config["title"],
+        game=config.get("game", ""),
+        title=config.get("title", ""),
         description=config.get("description"),
-        parameters=config["parameters"],
+        parameters=config.get("parameters", {}),
         tags=config.get("tags", []),
         author=author_info.get("username", "Utente sconosciuto"),
         created_at=config.get("created_at", datetime.now()),
-        average_rating=avg_rating,
-        total_ratings=total_ratings,
-        comments_count=comments_count,
-        likes_count=likes_count
+        average_rating=avg_rating if avg_rating is not None else None,
+        total_ratings=total_ratings or 0,
+        comments_count=comments_count or 0,
+        likes_count=likes_count or 0
     )
 
 @router.get("/search", response_model=SearchConfigsResponse)

@@ -257,7 +257,7 @@ class ApiClient {
     }
 
     async addComment(configId, comment) {
-        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/comment`, {
+    const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/comment`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ comment })
@@ -267,7 +267,7 @@ class ApiClient {
     }
 
     async toggleLike(configId) {
-        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/like`, {
+    const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/like`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({})
@@ -277,7 +277,7 @@ class ApiClient {
     }
 
     async addRating(configId, rating) {
-        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/valutation`, {
+    const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/rating`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ rating })

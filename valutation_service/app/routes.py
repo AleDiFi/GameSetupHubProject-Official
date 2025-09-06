@@ -11,6 +11,7 @@ db = get_database()
 comments_collection = db["comments"]
 likes_collection = db["likes"]
 valutations_collection = db["valutations"]
+ratings_collection = db["ratings"]
 
 # Rotte per commenti (Solo POST)
 @router.post("/config/{config_id}/comment")
@@ -59,25 +60,41 @@ def add_valutation(config_id: str, valutation: ValutationCreate, user=Depends(ge
     
     # Verifica se l'utente ha già valutato questa configurazione
     existing_valutation = valutations_collection.find_one({
-        "config_id": config_id,
-        "user_id": user["user_id"]
+    "config_id": config_id,
+    "user_id": user["user_id"]
     })
-    
+
     if existing_valutation:
-        # Aggiorna valutazione esistente
+        # update legacy
         valutations_collection.update_one(
             {"_id": existing_valutation["_id"]},
-            {
-                "$set": {
-                    "rating": valutation.rating,
-                    "comment": valutation.comment,
-                    "updated_at": datetime.now()
-                }
-            }
+            {"$set": {
+                "rating": valutation.rating,
+                "comment": valutation.comment,
+                "updated_at": datetime.now()
+            }}
         )
+        # update canonical; if missing, insert
+        upd_result = ratings_collection.update_one(
+            {"config_id": config_id, "user_id": user["user_id"]},
+            {"$set": {
+                "rating": valutation.rating,
+                "comment": valutation.comment,
+                "updated_at": datetime.now()
+            }}
+        )
+        if upd_result.matched_count == 0:
+            ratings_collection.insert_one({
+                "config_id": config_id,
+                "user_id": user["user_id"],
+                "rating": valutation.rating,
+                "comment": valutation.comment,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            })
         return {"message": "Rating updated"}
     else:
-        # Crea nuova valutazione
+        # insert legacy
         valutation_doc = {
             "config_id": config_id,
             "user_id": user["user_id"],
@@ -86,6 +103,14 @@ def add_valutation(config_id: str, valutation: ValutationCreate, user=Depends(ge
             "created_at": datetime.now()
         }
         result = valutations_collection.insert_one(valutation_doc)
+        # insert canonical
+        ratings_collection.insert_one({
+            "config_id": config_id,
+            "user_id": user["user_id"],
+            "rating": valutation.rating,
+            "comment": valutation.comment,
+            "created_at": datetime.now()
+        })
         return {"message": "Rating added", "id": str(result.inserted_id)}
 
 # Endpoint per eliminare un commento (DELETE operation)
@@ -124,4 +149,6 @@ def delete_rating(rating_id: str, user=Depends(get_current_user)):
     
     # Elimina la valutazione
     valutations_collection.delete_one({"_id": ObjectId(rating_id)})
+    # also remove any matching doc in canonical ratings_collection
+    ratings_collection.delete_one({"config_id": rating.get("config_id"), "user_id": rating.get("user_id")})
     return {"message": "Rating deleted"}
