@@ -1,13 +1,10 @@
 from pymongo import MongoClient
 import os
 
-# MongoDB connection
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
 db = client.gamesetuphub
 
-# Collections
-configurations_collection = db.configs
-ratings_collection = db.valutations
 comments_collection = db.comments
-users_collection = db.users
+ratings_collection = db.ratings
+likes_collection = db.likes

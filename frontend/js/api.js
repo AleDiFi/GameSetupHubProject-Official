@@ -219,10 +219,9 @@ class ApiClient {
     }
 
     async getConfigurationDetails(configId) {
-        const response = await fetch(`${API_CONFIG.VISUALIZATIONS_SERVICE}/visualizations/configuration/${configId}`, {
+        const response = await fetch(`${API_CONFIG.VISUALIZATIONS_SERVICE}/configs/${configId}`, {
             headers: this.getHeaders()
         });
-        
         return this.handleResponse(response);
     }
 
@@ -267,22 +266,20 @@ class ApiClient {
     }
 
     async toggleLike(configId) {
-    const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/like`, {
+        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/like`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({})
         });
-        
         return this.handleResponse(response);
     }
 
     async addRating(configId, rating) {
-    const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/rating`, {
+        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/rating`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ rating })
         });
-        
         return this.handleResponse(response);
     }
 

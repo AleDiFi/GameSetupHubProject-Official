@@ -165,7 +165,7 @@ def test_complete_workflow():
     
     # 5a. Visualizzazione configurazione completa (senza autenticazione)
     print("📖 Lettura configurazione completa...")
-    response = requests.get(f"{BASE_URL_VISUALIZATIONS}/visualizations/config/{config_id}")
+    response = requests.get(f"{BASE_URL_VISUALIZATIONS}/configs/{config_id}")
     assert response.status_code == 200, f"Visualizzazione fallita: {response.text}"
     
     config_view = response.json()

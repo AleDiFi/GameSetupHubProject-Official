@@ -99,34 +99,38 @@ class ConfigurationDetail {
     async loadConfiguration() {
         try {
             this.showLoading();
-            
+
             // Carica la configurazione di base
-            this.configuration = await apiClient.getConfig(this.configId);
-            
+            const baseConfig = await apiClient.getConfig(this.configId);
+            console.log('[DEBUG] baseConfig:', baseConfig);
+            this.configuration = baseConfig;
+
             // Prova a ottenere dettagli avanzati se disponibili
             try {
                 const advancedDetails = await apiClient.getConfigurationDetails(this.configId);
+                console.log('[DEBUG] advancedDetails:', advancedDetails);
                 // Merge dei dati se disponibili
                 this.configuration = { ...this.configuration, ...advancedDetails };
+                console.log('[DEBUG] merged configuration:', this.configuration);
             } catch (error) {
                 console.warn('Dettagli avanzati non disponibili:', error);
             }
-            
+
             // Carica informazioni utente autore
             await this.loadAuthorInfo();
-            
+
             // Carica configurazioni correlate
             this.loadRelatedConfigurations();
-            
+
             // Mostra la configurazione
             this.displayConfiguration();
-            
+
             // Carica commenti (placeholder)
             this.loadComments();
-            
+
             // Aggiorna statistiche
             this.updateStatistics();
-            
+
         } catch (error) {
             console.error('Errore nel caricamento della configurazione:', error);
             this.showError('Impossibile caricare la configurazione: ' + error.message);
@@ -349,18 +353,14 @@ class ConfigurationDetail {
     }
 
     updateStatistics() {
-        // Simula alcune statistiche
-        // Usa i dati reali se presenti (provenienti dal service di visualizzazioni), altrimenti fallback sicuro
         const views = this.configuration.views ?? 0;
-        const likes = this.configuration.likes_count ?? this.configuration.likes ?? 0;
-        const ratingsCount = this.configuration.total_ratings ?? (this.configuration.ratings ? this.configuration.ratings.length : 0) ?? 0;
+        const likes = this.configuration.likes_count ?? 0;
+        const ratingsCount = this.configuration.ratings ? this.configuration.ratings.length : 0;
         const avg = this.configuration.average_rating ?? null;
-
         const viewsEl = document.getElementById('viewsCount');
         const likesEl = document.getElementById('likesCount');
         const ratingsEl = document.getElementById('ratingsCount');
         const avgEl = document.getElementById('avgRating');
-
         if (viewsEl) viewsEl.textContent = String(views);
         if (likesEl) likesEl.textContent = String(likes);
         if (ratingsEl) ratingsEl.textContent = String(ratingsCount);
@@ -481,27 +481,21 @@ class ConfigurationDetail {
             showLoginModal();
             return;
         }
-        
         const likeBtn = document.getElementById('likeBtn');
         const likeText = document.getElementById('likeText');
         const originalText = likeBtn.innerHTML;
-        
         likeBtn.disabled = true;
         likeBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>...';
-        
         try {
             const response = await apiClient.toggleLike(this.configId);
-
             // Ricarica i dettagli aggiornati per avere il conteggio reale e lo stato
             const updated = await apiClient.getConfigurationDetails(this.configId);
             this.configuration = { ...this.configuration, ...updated };
             this.updateStatistics();
-
-            // Aggiorna stato del bottone in base ai likes (verifica se l'utente è tra i likes)
+            // Aggiorna stato del bottone in base a liked_by
             const userData = authManager.getCurrentUser();
-            const likes = this.configuration.likes || [];
-            const hasLiked = likes.some(l => l.user_id === userData.user_id || l.user_id === userData.id || l.username === userData.username);
-            this.userHasLiked = !!hasLiked;
+            const liked_by = this.configuration.liked_by || [];
+            this.userHasLiked = liked_by.includes(userData.user_id);
             if (this.userHasLiked) {
                 likeText.textContent = 'Ti Piace';
                 likeBtn.classList.remove('btn-primary');
@@ -511,7 +505,6 @@ class ConfigurationDetail {
                 likeBtn.classList.remove('btn-success');
                 likeBtn.classList.add('btn-primary');
             }
-            
         } catch (error) {
             apiClient.showError('Errore nell\'operazione: ' + error.message);
         } finally {

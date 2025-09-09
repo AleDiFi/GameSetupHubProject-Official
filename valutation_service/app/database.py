@@ -1,13 +1,12 @@
 from pymongo import MongoClient
 import os
 
-def get_database():
-    # Legge prima la variabile MONGO_URI (usata in docker-compose), altrimenti MONGO_URL,
-    # altrimenti usa l'indirizzo standard Docker 'mongo'.
-    MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_URL") or "mongodb://mongo:27017"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:27017/")
+client = MongoClient(MONGO_URI)
+db = client["gamesetuphub"]
 
-    # Connessione al database
-    client = MongoClient(MONGO_URI)
+comments_collection = db["comments"]
+ratings_collection = db["ratings"]
+likes_collection = db["likes"]
+configs_collection = db["configs"]
 
-    # Ritorna il database chiamato "gamesetuphub"
-    return client["gamesetuphub"]

@@ -8,7 +8,7 @@ def test_quick():
     print("🚀 Test Quick Architecture")
     
     # 1. Login con utente esistente
-    login_data = {"email": "test3@test.com", "password": "password123"}
+    login_data = {"email": "user@user.it", "password": "useruser"}
     response = requests.post("http://localhost:8001/users/login-json", json=login_data)
     
     if response.status_code != 200:

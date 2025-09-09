@@ -18,7 +18,7 @@ class LikeCreate(BaseModel):
 class Valutation(BaseModel):
     id: Optional[str] = None
     user_id: str
-    game_id: str
+    config_id: str
     score: int
 
 class Comment(BaseModel):

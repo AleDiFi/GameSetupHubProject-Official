@@ -26,9 +26,14 @@ def upload_config(config: ConfigCreate, user=Depends(get_current_user)):
 
 @router.get("/{config_id}")
 def get_config(config_id: str):
-    config = configs_collection.find_one({"_id": ObjectId(config_id)})
+    try:
+        obj_id = ObjectId(config_id)
+        config = configs_collection.find_one({"_id": obj_id})
+    except Exception:
+        config = configs_collection.find_one({"_id": config_id})
     if not config:
         raise HTTPException(status_code=404, detail="Configurazione non trovata")
+    
     config["_id"] = str(config["_id"])
     return config
 
