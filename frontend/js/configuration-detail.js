@@ -368,19 +368,55 @@ class ConfigurationDetail {
     }
 
     async loadComments() {
-        // Placeholder per i commenti
-        // In futuro qui si caricheranno i commenti reali dal servizio valuations
         const commentsList = document.getElementById('commentsList');
-        commentsList.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Nessun commento ancora.</p>
-                <button class="btn btn-outline-primary" onclick="configDetail.showCommentForm()">
-                    <i class="fas fa-plus me-2"></i>
-                    Aggiungi il primo commento
-                </button>
-            </div>
-        `;
+        const comments = this.configuration && this.configuration.comments ? this.configuration.comments : [];
+
+        if (comments.length === 0) {
+            commentsList.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nessun commento ancora.</p>
+                    <button class="btn btn-outline-primary" onclick="configDetail.showCommentForm()">
+                        <i class="fas fa-plus me-2"></i>
+                        Aggiungi il primo commento
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Costruisci HTML per i commenti
+        commentsList.innerHTML = comments.map(comment => {
+            const author = comment.username || comment.user_id || 'Utente';
+            const text = comment.comment || comment.text || '';
+            let createdAt = '';
+            if (comment.created_at) {
+                try {
+                    createdAt = apiClient.formatDate(comment.created_at);
+                } catch (e) {
+                    createdAt = String(comment.created_at);
+                }
+            }
+
+            return `
+                <div class="comment-item mb-3">
+                    <div class="d-flex gap-3">
+                        <div class="author-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                            <strong>${(author || 'U').charAt(0).toUpperCase()}</strong>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${author}</strong>
+                                    <div class="text-muted small">${createdAt}</div>
+                                </div>
+                            </div>
+                            <p class="mb-0 mt-2">${text}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     showCommentForm() {

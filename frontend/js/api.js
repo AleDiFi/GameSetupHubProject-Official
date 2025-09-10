@@ -219,7 +219,7 @@ class ApiClient {
     }
 
     async getConfigurationDetails(configId) {
-        const response = await fetch(`${API_CONFIG.VISUALIZATIONS_SERVICE}/configs/${configId}`, {
+    const response = await fetch(`${API_CONFIG.VISUALIZATIONS_SERVICE}/visualizations/configs/${configId}`, {
             headers: this.getHeaders()
         });
         return this.handleResponse(response);
