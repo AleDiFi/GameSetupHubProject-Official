@@ -100,21 +100,10 @@ class ConfigurationDetail {
         try {
             this.showLoading();
 
-            // Carica la configurazione di base
-            const baseConfig = await apiClient.getConfig(this.configId);
-            console.log('[DEBUG] baseConfig:', baseConfig);
-            this.configuration = baseConfig;
-
-            // Prova a ottenere dettagli avanzati se disponibili
-            try {
-                const advancedDetails = await apiClient.getConfigurationDetails(this.configId);
-                console.log('[DEBUG] advancedDetails:', advancedDetails);
-                // Merge dei dati se disponibili
-                this.configuration = { ...this.configuration, ...advancedDetails };
-                console.log('[DEBUG] merged configuration:', this.configuration);
-            } catch (error) {
-                console.warn('Dettagli avanzati non disponibili:', error);
-            }
+            // Carica la vista arricchita (visualizations) che include i dati base e le statistiche
+            const advancedDetails = await apiClient.getConfigurationDetails(this.configId);
+            console.log('[DEBUG] advancedDetails:', advancedDetails);
+            this.configuration = advancedDetails;
 
             // Carica informazioni utente autore
             await this.loadAuthorInfo();
@@ -353,18 +342,31 @@ class ConfigurationDetail {
     }
 
     updateStatistics() {
-        const views = this.configuration.views ?? 0;
-        const likes = this.configuration.likes_count ?? 0;
-        const ratingsCount = this.configuration.ratings ? this.configuration.ratings.length : 0;
+        // Supporta più nomi di campo provenienti da diversi servizi
+        const views = (this.configuration.views ?? this.configuration.views_count) ?? 0;
+        const likes = (this.configuration.likes_count ?? this.configuration.likes) ?? 0;
+
+        // Calcola il numero di valutazioni da vari possibili campi
+        let ratingsCount = 0;
+        if (Array.isArray(this.configuration.ratings)) {
+            ratingsCount = this.configuration.ratings.length;
+        } else if (typeof this.configuration.total_ratings === 'number') {
+            ratingsCount = this.configuration.total_ratings;
+        } else if (typeof this.configuration.ratings_count === 'number') {
+            ratingsCount = this.configuration.ratings_count;
+        }
+
         const avg = this.configuration.average_rating ?? null;
+
         const viewsEl = document.getElementById('viewsCount');
         const likesEl = document.getElementById('likesCount');
         const ratingsEl = document.getElementById('ratingsCount');
         const avgEl = document.getElementById('avgRating');
+
         if (viewsEl) viewsEl.textContent = String(views);
         if (likesEl) likesEl.textContent = String(likes);
         if (ratingsEl) ratingsEl.textContent = String(ratingsCount);
-        if (avgEl) avgEl.textContent = avg !== null && avg !== undefined ? (Number(avg).toFixed(1) + '★') : 'Nessuna valutazione';
+        if (avgEl) avgEl.textContent = avg !== null && avg !== undefined ? (Number(avg).toFixed(1) + '\u2605') : 'Nessuna valutazione';
     }
 
     async loadComments() {
@@ -382,11 +384,22 @@ class ConfigurationDetail {
                     </button>
                 </div>
             `;
+            // Aggiorna contatore commenti
+            const cntEl = document.getElementById('commentsCount');
+            if (cntEl) cntEl.textContent = `(0)`;
             return;
         }
 
-        // Costruisci HTML per i commenti
-        commentsList.innerHTML = comments.map(comment => {
+        // Costruisci HTML per i commenti e mostra sempre CTA per aggiungere un commento
+        const addButtonHtml = `
+            <div class="mb-3 text-end">
+                <button class="btn btn-outline-primary btn-sm" onclick="configDetail.showCommentForm()">
+                    <i class="fas fa-plus me-1"></i> Aggiungi Commento
+                </button>
+            </div>
+        `;
+
+        commentsList.innerHTML = addButtonHtml + comments.map(comment => {
             const author = comment.username || comment.user_id || 'Utente';
             const text = comment.comment || comment.text || '';
             let createdAt = '';
@@ -417,6 +430,11 @@ class ConfigurationDetail {
                 </div>
             `;
         }).join('');
+
+        // Aggiorna contatore commenti (usa comment_count se disponibile)
+        const cntEl2 = document.getElementById('commentsCount');
+        const commentsCount = this.configuration && (this.configuration.comments_count ?? comments.length);
+        if (cntEl2) cntEl2.textContent = `(${commentsCount})`;
     }
 
     showCommentForm() {

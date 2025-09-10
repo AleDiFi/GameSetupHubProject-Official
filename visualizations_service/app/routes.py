@@ -96,6 +96,14 @@ def enrich_configuration(config: dict) -> ConfigurationView:
     except Exception as e:
         print('DEBUG: BSON inspect failed:', e)
 
+    # Build structured author object for frontend
+    author_obj = None
+    if author_info:
+        author_obj = {
+            "username": author_info.get("username", "Utente sconosciuto"),
+            "email": author_info.get("email", "-")
+        }
+
     return ConfigurationView(
         id=str(config_id),
         game=config.get("game", ""),
@@ -103,10 +111,12 @@ def enrich_configuration(config: dict) -> ConfigurationView:
         description=config.get("description"),
         parameters=config.get("parameters", {}),
         tags=config.get("tags", []),
-        author=author_info.get("username", "Utente sconosciuto"),
+        author=author_obj,
+        user_id=str(config.get("user_id")) if config.get("user_id") else None,
         created_at=config.get("created_at", datetime.now()),
         average_rating=avg_rating,
         total_ratings=total_ratings,
+        views=int(config.get("views", 0)),
         comments=comments,
         comments_count=len(comments),
         likes_count=likes_count
