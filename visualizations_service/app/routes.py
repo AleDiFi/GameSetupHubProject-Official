@@ -177,6 +177,8 @@ def search_configurations(
         has_more=has_more
     )
 
+# Non sappiamo dove e se vengono usati, per ora teniamoli ma sono da eliminare in futuro
+'''
 @router.get("/stats/popular-games")
 def get_popular_games(limit: int = Query(10, ge=1, le=100)):
     pipeline = [
@@ -225,3 +227,4 @@ def get_top_configurations(limit: int = Query(10, ge=1, le=100)):
     return {
         "top_configurations": top_configs
     }
+'''

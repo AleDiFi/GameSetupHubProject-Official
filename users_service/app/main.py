@@ -19,10 +19,12 @@ app.add_middleware(
 
 app.include_router(user_router, prefix="/users")
 
+
 @app.get("/")
 def read_root():
     return {"message": "Users Service attivo"}
 
+# Controllare se serve questo endpoint di health check
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "users"}

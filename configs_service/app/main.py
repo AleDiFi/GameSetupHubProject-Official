@@ -15,3 +15,11 @@ app.add_middleware(
 )
 
 app.include_router(config_router, prefix="/configs")
+
+@app.get("/")
+def read_root():
+    return {"message": "Configs Service attivo - Solo operazioni di scrittura"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}

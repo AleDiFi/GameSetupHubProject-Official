@@ -56,7 +56,6 @@ def add_valutation(config_id: str, valutation: ValutationCreate, user=Depends(ge
             {"_id": existing_valutation["_id"]},
             {"$set": {
                 "rating": valutation.rating,
-                "comment": valutation.comment,
                 "updated_at": datetime.now()
             }}
         )
@@ -66,7 +65,6 @@ def add_valutation(config_id: str, valutation: ValutationCreate, user=Depends(ge
             "config_id": str(config_id),
             "user_id": user["user_id"],
             "rating": valutation.rating,
-            "comment": valutation.comment,
             "created_at": datetime.now()
         }
         result = ratings_collection.insert_one(valutation_doc)
@@ -105,7 +103,6 @@ def delete_rating(config_id: str, user=Depends(get_current_user)):
     if not user_rating:
         raise HTTPException(status_code=404, detail="Valutazione non trovata")
 
-    # Rimuovi la valutazione dell'utente
     # Rimuovi la valutazione dell'utente
     ratings = [r for r in ratings if r["user_id"] != user["user_id"]]
     avg_rating = round(sum(r["rating"] for r in ratings) / len(ratings), 2) if ratings else 0

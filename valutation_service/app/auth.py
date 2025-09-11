@@ -41,7 +41,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Token non valido",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
 
+# Funzione per ottenere l'utente corrente in modo opzionale (per operazioni di lettura)
+# Valutare se usarla o meno e se toglierla dal codice
 def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[dict]:
     """
     Verifica il token JWT opzionale. Restituisce None se non presente o non valido.

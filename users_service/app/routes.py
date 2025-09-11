@@ -63,6 +63,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     token = create_access_token({"user_id": str(user["_id"]), "email": user["email"]})
     return {"access_token": token, "token_type": "bearer"}
 
+# Nuovo endpoint di login che accetta JSON invece di form data
+# Utile per client che non supportano form data
+# Utilizzo per i test 
+
 @router.post("/login-json")
 def login_json(user_data: UserLogin):
     """Endpoint di login che accetta JSON invece di form data"""
