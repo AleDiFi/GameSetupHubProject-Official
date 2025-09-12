@@ -174,7 +174,7 @@ class ConfigurationDetail {
         document.getElementById('configGame').innerHTML = `
             <i class="fas fa-gamepad me-1"></i>
             ${this.configuration.game || 'Gioco non specificato'}
-        `;
+    `;
         
         document.getElementById('configDate').innerHTML = `
             <i class="fas fa-clock me-1"></i>
@@ -414,8 +414,13 @@ class ConfigurationDetail {
             return `
                 <div class="comment-item mb-3">
                     <div class="d-flex gap-3">
-                        <div class="author-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                            <strong>${(author || 'U').charAt(0).toUpperCase()}</strong>
+                        <div class="author-avatar-wrapper" style="width:48px;height:48px;">
+                            ${comment.avatar_url ? 
+                                `<img src="${comment.avatar_url}" alt="avatar" class="author-avatar-img rounded-circle" width="48" height="48">` :
+                                `<div class="author-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                                    <strong>${(author || 'U').charAt(0).toUpperCase()}</strong>
+                                </div>`
+                            }
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start">
@@ -798,6 +803,13 @@ const configDetailCSS = `
     flex: 1;
     text-align: right;
     word-break: break-word;
+}
+
+/* avatar image in comments */
+.author-avatar-img {
+    object-fit: cover;
+    width: 48px;
+    height: 48px;
 }
 
 .parameter-value pre {

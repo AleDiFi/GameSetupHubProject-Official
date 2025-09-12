@@ -130,11 +130,13 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stats-card">
+                <!-- Valutazione Media rimossa visivamente, ma lasciamo la struttura DOM/inid per mantenere il layout e non rompere il JS -->
+                <div class="stats-card invisible" aria-hidden="true">
                     <div class="stats-icon">
                         <i class="fas fa-star"></i>
                     </div>
                     <div class="stats-content">
+                        <!-- tenuto per compatibilità con gli script -->
                         <h4 id="avg-rating">-</h4>
                         <p>Valutazione Media</p>
                     </div>

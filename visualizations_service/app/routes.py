@@ -50,6 +50,22 @@ def enrich_configuration(config: dict) -> ConfigurationView:
         # normalize id field name for frontend convenience
         if "_id" in c_s:
             c_s["id"] = str(c_s.pop("_id"))
+        # try to enrich comment with user's public info (username, avatar)
+        try:
+            user_info = get_user_info(c_s.get("user_id")) if c_s.get("user_id") else None
+            if user_info:
+                # prefer explicit username if present
+                c_s.setdefault("username", user_info.get("username"))
+                # attach a simple avatar URL; fallback to ui-avatars generated image
+                avatar = user_info.get("avatar_url") if isinstance(user_info, dict) else None
+                if not avatar:
+                    uname = c_s.get("username") or 'U'
+                    # use ui-avatars to generate a colored avatar with initials
+                    avatar = f"https://ui-avatars.com/api/?name={uname.replace(' ', '+')}&background=0D6EFD&color=fff&size=128"
+                c_s["avatar_url"] = avatar
+        except Exception:
+            # if user service is unavailable, continue without enrichment
+            pass
         comments.append(c_s)
 
     ratings = []
@@ -177,7 +193,8 @@ def search_configurations(
         has_more=has_more
     )
 
-# Non sappiamo dove e se vengono usati, per ora teniamoli ma sono da eliminare in futuro
+# Sperimentali / Per future implementazioni
+# Per ora commentate per evitare dipendenze aggiuntive e complessità
 '''
 @router.get("/stats/popular-games")
 def get_popular_games(limit: int = Query(10, ge=1, le=100)):
