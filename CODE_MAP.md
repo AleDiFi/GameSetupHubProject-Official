@@ -173,5 +173,3 @@ Nota operativa: era necessario convertire ObjectId in stringa prima di passare i
 - Documento: posso estendere la mappa funzione-per-funzione per ogni file rimanente se vuoi l'elenco completo file-per-file (attualmente ho espanso i file principali letti).
 
 ---
-
-Generato il: 2025-09-10
