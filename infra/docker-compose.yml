@@ -2,6 +2,7 @@ services:
   mongo:
     image: mongo:6
     container_name: mongo
+    restart: on-failure
     ports:
       - "27017:27017"
     volumes:
@@ -12,6 +13,7 @@ services:
       context: ../users_service
     ports:
       - "8001:8000"
+    restart: on-failure
     environment:
       - MONGO_URI=mongodb://mongo:27017/
 
@@ -20,6 +22,7 @@ services:
       context: ../configs_service
     ports:
       - "8002:8000"
+    restart: on-failure
     environment:
       - MONGO_URI=mongodb://mongo:27017/
 
@@ -28,6 +31,7 @@ services:
       context: ../visualizations_service
     ports:
       - "8003:8000"
+    restart: on-failure
     environment:
       - MONGO_URI=mongodb://mongo:27017/
       - CONFIGS_SERVICE_URL=http://configs-service:8000
@@ -42,6 +46,7 @@ services:
       context: ../valutation_service
     ports:
       - "8004:8000"
+    restart: on-failure
     environment:
       - MONGO_URI=mongodb://mongo:27017/
       - JWT_SECRET_KEY=supersegreto123
@@ -55,6 +60,7 @@ services:
       context: ../frontend
     ports:
       - "8080:80"
+    restart: on-failure
     depends_on:
       - user-service
       - configs-service

@@ -1,42 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from .models import UserRegister, UserLogin
-from .auth import hash_password, verify_password, create_access_token
+from .auth import hash_password, verify_password, create_access_token, get_current_user
 from .database import users_collection
-from jose import jwt, JWTError
 from bson import ObjectId
 
 router = APIRouter()
 
-# OAuth2 scheme per l'autenticazione
+# OAuth2 scheme per l'autenticazione (routes will still use Depends(oauth2_scheme) where needed)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Verifica il token JWT e restituisce l'utente corrente"""
-    try:
-        # Usa la stessa SECRET_KEY dell'auth.py
-        SECRET_KEY = "supersegreto123"
-        ALGORITHM = "HS256"
-        
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("user_id")
-        email: str = payload.get("email")
-        
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Token non valido")
-            
-        # Verifica che l'utente esista ancora nel database
-        user = users_collection.find_one({"_id": ObjectId(user_id)})
-        if not user:
-            raise HTTPException(status_code=401, detail="Utente non trovato")
-            
-        return {
-            "user_id": user_id,
-            "email": email,
-            "username": user["username"]
-        }
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token non valido")
 
 @router.post("/register")
 def register(user: UserRegister):

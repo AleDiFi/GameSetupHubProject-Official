@@ -411,8 +411,12 @@ class ConfigurationDetail {
                 }
             }
 
+            // Add edit/delete controls if the current user is the author
+            const currentUser = authManager.getCurrentUser();
+            const isAuthor = currentUser && currentUser.user_id && (currentUser.user_id === comment.user_id || currentUser.user_id === comment.userId || currentUser.user_id === comment.userIdStr);
+
             return `
-                <div class="comment-item mb-3">
+                <div class="comment-item mb-3" id="comment-${comment.id}">
                     <div class="d-flex gap-3">
                         <div class="author-avatar-wrapper" style="width:48px;height:48px;">
                             ${comment.avatar_url ? 
@@ -428,8 +432,16 @@ class ConfigurationDetail {
                                     <strong>${author}</strong>
                                     <div class="text-muted small">${createdAt}</div>
                                 </div>
+                                ${isAuthor ? `
+                                    <div class="comment-actions">
+                                        <button class="btn btn-sm btn-link text-danger" onclick="configDetail.handleDeleteComment('${comment.id}')">Elimina</button>
+                                        <button class="btn btn-sm btn-link" onclick="configDetail.startEditComment('${comment.id}', ${JSON.stringify(text)})">Modifica</button>
+                                    </div>
+                                ` : ''}
                             </div>
-                            <p class="mb-0 mt-2">${text}</p>
+                            <div id="comment-body-${comment.id}">
+                                <p class="mb-0 mt-2" id="comment-text-${comment.id}">${text}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -440,6 +452,58 @@ class ConfigurationDetail {
         const cntEl2 = document.getElementById('commentsCount');
         const commentsCount = this.configuration && (this.configuration.comments_count ?? comments.length);
         if (cntEl2) cntEl2.textContent = `(${commentsCount})`;
+    }
+
+    async handleDeleteComment(commentId) {
+        if (!confirm('Sei sicuro di voler eliminare questo commento?')) return;
+        try {
+            await apiClient.deleteComment(commentId);
+            apiClient.showSuccess('Commento eliminato');
+            const updated = await apiClient.getConfigurationDetails(this.configId);
+            this.configuration = { ...this.configuration, ...updated };
+            this.loadComments();
+        } catch (error) {
+            apiClient.showError('Errore durante l\'eliminazione: ' + error.message);
+        }
+    }
+
+    startEditComment(commentId, currentText) {
+        const bodyEl = document.getElementById(`comment-body-${commentId}`);
+        if (!bodyEl) return;
+        bodyEl.innerHTML = `
+            <div class="d-flex flex-column">
+                <textarea id="edit-text-${commentId}" class="form-control mb-2" rows="3">${currentText}</textarea>
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-secondary btn-sm" onclick="configDetail.cancelEditComment('${commentId}', ${JSON.stringify(currentText)})">Annulla</button>
+                    <button class="btn btn-primary btn-sm" onclick="configDetail.saveEditComment('${commentId}')">Salva</button>
+                </div>
+            </div>
+        `;
+    }
+
+    cancelEditComment(commentId, originalText) {
+        const bodyEl = document.getElementById(`comment-body-${commentId}`);
+        if (!bodyEl) return;
+        bodyEl.innerHTML = `<p class="mb-0 mt-2" id="comment-text-${commentId}">${originalText}</p>`;
+    }
+
+    async saveEditComment(commentId) {
+        const textarea = document.getElementById(`edit-text-${commentId}`);
+        if (!textarea) return;
+        const newText = textarea.value.trim();
+        if (!newText) {
+            apiClient.showError('Il commento non può essere vuoto');
+            return;
+        }
+        try {
+            await apiClient.editComment(commentId, newText);
+            apiClient.showSuccess('Commento aggiornato');
+            const updated = await apiClient.getConfigurationDetails(this.configId);
+            this.configuration = { ...this.configuration, ...updated };
+            this.loadComments();
+        } catch (error) {
+            apiClient.showError('Errore durante l\'aggiornamento: ' + error.message);
+        }
     }
 
     showCommentForm() {

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.models import CommentCreate, LikeCreate, ValutationCreate
+from app.models import CommentUpdate
 from app.database import comments_collection, likes_collection, configs_collection, ratings_collection
 from app.auth import get_current_user
 from datetime import datetime
@@ -88,6 +89,34 @@ def delete_comment(comment_id: str, user=Depends(get_current_user)):
     # Elimina il commento
     comments_collection.delete_one({"_id": ObjectId(comment_id)})
     return {"message": "Comment deleted"}
+
+
+# Endpoint per modificare un commento (PUT)
+@router.put("/comment/{comment_id}")
+def edit_comment(comment_id: str, update: CommentUpdate, user=Depends(get_current_user)):
+    """Modifica il testo di un commento (solo se sei l'autore)"""
+    from bson import ObjectId
+
+    # Trova il commento
+    comment = comments_collection.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Commento non trovato")
+
+    # Verifica che l'utente sia l'autore del commento
+    if comment["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Non puoi modificare commenti di altri utenti")
+
+    # Aggiorna il commento
+    comments_collection.update_one(
+        {"_id": ObjectId(comment_id)},
+        {"$set": {"comment": update.comment, "updated_at": datetime.now()}}
+    )
+
+    # Recupera e ritorna il commento aggiornato
+    updated = comments_collection.find_one({"_id": ObjectId(comment_id)})
+    if updated and "_id" in updated:
+        updated["id"] = str(updated.pop("_id"))
+    return {"message": "Comment updated", "comment": updated}
 
 
 # Endpoint per eliminare una valutazione (DELETE operation)

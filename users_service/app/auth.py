@@ -20,3 +20,43 @@ def create_access_token(data: dict):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_current_user(token: str = None):
+    """Verifica il token JWT e restituisce l'utente corrente.
+
+    This helper mirrors the previous implementation that lived in routes.py.
+    It accepts a token string (dependency injection will pass the OAuth2 scheme in routes).
+    """
+    from fastapi import HTTPException
+    from jose import JWTError
+    from .database import users_collection
+    from bson import ObjectId
+
+    try:
+        if token is None:
+            raise HTTPException(status_code=401, detail="Token non fornito")
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("user_id")
+        email: str = payload.get("email")
+
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Token non valido")
+
+        # Verify user still exists
+        try:
+            user = users_collection.find_one({"_id": ObjectId(user_id)})
+        except Exception:
+            user = users_collection.find_one({"_id": user_id})
+
+        if not user:
+            raise HTTPException(status_code=401, detail="Utente non trovato")
+
+        return {
+            "user_id": user_id,
+            "email": email,
+            "username": user.get("username")
+        }
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token non valido")

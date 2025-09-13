@@ -10,6 +10,10 @@ class ValutationCreate(BaseModel):
 class CommentCreate(BaseModel):
     comment: str
 
+
+class CommentUpdate(BaseModel):
+    comment: str
+
 # Modello per creare un like
 class LikeCreate(BaseModel):
     pass  # Non servono campi aggiuntivi, user_id e config_id vengono dal context

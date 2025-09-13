@@ -265,6 +265,23 @@ class ApiClient {
         return this.handleResponse(response);
     }
 
+    async deleteComment(commentId) {
+        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/comment/${commentId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    async editComment(commentId, commentText) {
+        const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/comment/${commentId}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ comment: commentText })
+        });
+        return this.handleResponse(response);
+    }
+
     async toggleLike(configId) {
         const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/like`, {
             method: 'POST',

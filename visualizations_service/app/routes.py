@@ -1,142 +1,15 @@
 from fastapi import APIRouter, HTTPException, Query
 from .models import ConfigurationView, ConfigurationDetails, GameConfigurationsView, SearchConfigsResponse
 from .database import comments_collection, ratings_collection, likes_collection
-from .utils import get_user_info, get_configuration_from_service, get_configurations_by_game
+from .utils import get_user_info, get_configuration_from_service, get_configurations_by_game, sanitize_bson, find_bson_residuals, enrich_configuration
 from datetime import datetime
 from bson import ObjectId
 from typing import List, Optional
 
 router = APIRouter()
 
-def _sanitize_bson(obj):
-    """Recursively convert BSON types (ObjectId) to JSON-serializable types (str).
-    Leaves datetimes as-is so Pydantic can parse them into datetime objects.
-    """
-    from bson import ObjectId
-    if isinstance(obj, dict):
-        out = {}
-        for k, v in obj.items():
-            if isinstance(v, ObjectId):
-                out[k] = str(v)
-            elif isinstance(v, list) or isinstance(v, tuple):
-                out[k] = [_sanitize_bson(x) for x in v]
-            elif isinstance(v, dict):
-                out[k] = _sanitize_bson(v)
-            else:
-                out[k] = v
-        return out
-    elif isinstance(obj, list) or isinstance(obj, tuple):
-        return [_sanitize_bson(x) for x in obj]
-    else:
-        return obj
 
 
-def enrich_configuration(config: dict) -> ConfigurationView:
-    # config may come from configs service where _id is already converted to str,
-    # but comments/ratings returned from Mongo contain ObjectId in their _id fields.
-    config_id = config.get("_id")
-
-    # counts
-    likes_count = likes_collection.count_documents({"config_id": config_id})
-
-    # load comments and ratings from their collections and sanitize them
-    raw_comments = list(comments_collection.find({"config_id": config_id}))
-    raw_ratings = list(ratings_collection.find({"config_id": config_id}))
-
-    # sanitize BSON types to make them JSON serializable / acceptable by Pydantic
-    comments = []
-    for c in raw_comments:
-        c_s = _sanitize_bson(c)
-        # normalize id field name for frontend convenience
-        if "_id" in c_s:
-            c_s["id"] = str(c_s.pop("_id"))
-        # try to enrich comment with user's public info (username, avatar)
-        try:
-            user_info = get_user_info(c_s.get("user_id")) if c_s.get("user_id") else None
-            if user_info:
-                # prefer explicit username if present
-                c_s.setdefault("username", user_info.get("username"))
-                # attach a simple avatar URL; fallback to ui-avatars generated image
-                avatar = user_info.get("avatar_url") if isinstance(user_info, dict) else None
-                if not avatar:
-                    uname = c_s.get("username") or 'U'
-                    # use ui-avatars to generate a colored avatar with initials
-                    avatar = f"https://ui-avatars.com/api/?name={uname.replace(' ', '+')}&background=0D6EFD&color=fff&size=128"
-                c_s["avatar_url"] = avatar
-        except Exception:
-            # if user service is unavailable, continue without enrichment
-            pass
-        comments.append(c_s)
-
-    ratings = []
-    for r in raw_ratings:
-        r_s = _sanitize_bson(r)
-        if "_id" in r_s:
-            r_s["id"] = str(r_s.pop("_id"))
-        ratings.append(r_s)
-
-    total_ratings = len(ratings)
-    avg_rating = round(sum(r.get("rating", 0) for r in ratings) / total_ratings, 2) if total_ratings else None
-
-    author_info = get_user_info(config.get("user_id")) or {}
-
-    # Debug: check for any remaining BSON ObjectId instances in the payload
-    try:
-        from bson import ObjectId as _ObjectId
-        def _find_bson(obj, path=''):
-            found = []
-            if isinstance(obj, dict):
-                for k, v in obj.items():
-                    new_path = f"{path}.{k}" if path else k
-                    if isinstance(v, _ObjectId):
-                        found.append(new_path)
-                    elif isinstance(v, dict) or isinstance(v, list):
-                        found.extend(_find_bson(v, new_path))
-            elif isinstance(obj, list):
-                for i, v in enumerate(obj):
-                    new_path = f"{path}[{i}]"
-                    if isinstance(v, _ObjectId):
-                        found.append(new_path)
-                    elif isinstance(v, dict) or isinstance(v, list):
-                        found.extend(_find_bson(v, new_path))
-            return found
-
-        residuals = _find_bson({
-            'config': config,
-            'comments': comments,
-            'ratings': ratings
-        })
-        if residuals:
-            # log to stdout so container logs capture it
-            print('DEBUG: Found residual BSON ObjectId at paths:', residuals)
-    except Exception as e:
-        print('DEBUG: BSON inspect failed:', e)
-
-    # Build structured author object for frontend
-    author_obj = None
-    if author_info:
-        author_obj = {
-            "username": author_info.get("username", "Utente sconosciuto"),
-            "email": author_info.get("email", "-")
-        }
-
-    return ConfigurationView(
-        id=str(config_id),
-        game=config.get("game", ""),
-        title=config.get("title", ""),
-        description=config.get("description"),
-        parameters=config.get("parameters", {}),
-        tags=config.get("tags", []),
-        author=author_obj,
-        user_id=str(config.get("user_id")) if config.get("user_id") else None,
-        created_at=config.get("created_at", datetime.now()),
-        average_rating=avg_rating,
-        total_ratings=total_ratings,
-        views=int(config.get("views", 0)),
-        comments=comments,
-        comments_count=len(comments),
-        likes_count=likes_count
-    )
 
 @router.get("/configs/{config_id}", response_model=ConfigurationDetails)
 def get_configuration_details(config_id: str):

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from .models import ConfigCreate
 from .database import configs_collection
+from .utils import get_config_by_id
 from .auth import get_current_user
 from bson import ObjectId
 from datetime import datetime
@@ -27,41 +28,9 @@ def upload_config(config: ConfigCreate, user=Depends(get_current_user)):
 
 @router.get("/{config_id}")
 def get_config(config_id: str, request: Request, increment: bool = Query(True)):
-    # Try to treat config_id as ObjectId, fall back to string id
-    try:
-        obj_id = ObjectId(config_id)
-        if increment:
-            config = configs_collection.find_one_and_update(
-                {"_id": obj_id},
-                {"$inc": {"views": 1}},
-                return_document=ReturnDocument.AFTER
-            )
-        else:
-            config = configs_collection.find_one({"_id": obj_id})
-    except Exception:
-        if increment:
-            config = configs_collection.find_one_and_update(
-                {"_id": config_id},
-                {"$inc": {"views": 1}},
-                return_document=ReturnDocument.AFTER
-            )
-        else:
-            config = configs_collection.find_one({"_id": config_id})
-
-    # Diagnostic logging to trace duplicate calls
-    # Da eliminare in produzione
-    try:
-        client_addr = request.client.host if request.client else 'unknown'
-    except Exception:
-        client_addr = 'unknown'
-    print(f"[DEBUG configs-service] GET /configs/{config_id} increment={increment} client={client_addr} headers={{}}".format(dict(request.headers)))
-
+    config = get_config_by_id(config_id, increment=increment, request=request)
     if not config:
         raise HTTPException(status_code=404, detail="Configurazione non trovata")
-
-    # normalize fields for frontend
-    config["_id"] = str(config["_id"])
-    config["views"] = int(config.get("views", 0))
     return config
 
 @router.get("/")
