@@ -226,12 +226,22 @@ class ApiClient {
     }
 
     async searchConfigurationsAdvanced(searchParams) {
-        const response = await fetch(`${API_CONFIG.VISUALIZATIONS_SERVICE}/visualizations/search`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(searchParams)
+        // Costruisci la query string dai parametri
+        const params = new URLSearchParams();
+        if (searchParams.game) params.append('game', searchParams.game);
+        if (searchParams.title) params.append('title', searchParams.title);
+        if (searchParams.tags && Array.isArray(searchParams.tags)) {
+            searchParams.tags.forEach(tag => params.append('tags', tag));
+        }
+        if (searchParams.limit) params.append('limit', searchParams.limit);
+        if (searchParams.offset) params.append('offset', searchParams.offset);
+        // Aggiungi altri parametri se necessario
+
+        const url = `${API_CONFIG.VISUALIZATIONS_SERVICE}/visualizations/search?${params.toString()}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.getHeaders()
         });
-        
         return this.handleResponse(response);
     }
 
@@ -259,7 +269,7 @@ class ApiClient {
     const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${configId}/comment`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ comment })
+            body: JSON.stringify(comment)
         });
         
         return this.handleResponse(response);

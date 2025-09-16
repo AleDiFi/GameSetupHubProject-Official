@@ -53,7 +53,9 @@ def search_configurations(
 
     configs = get_configurations_by_game(game)
     total = len(configs)
-    configs = [c for c in configs if c.get("title") and title.lower() in c["title"].lower()]
+    # Filtro per titolo solo se title è valorizzato
+    if title:
+        configs = [c for c in configs if c.get("title") and title.lower() in c["title"].lower()]
     if tags:
         configs = [c for c in configs if set(tags) & set(c.get("tags", []))]
     enriched = [enrich_configuration(c) for c in configs]

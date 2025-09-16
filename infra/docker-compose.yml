@@ -15,8 +15,8 @@ services:
       - "8001:8000"
     restart: on-failure
     environment:
-      - MONGO_URI=mongodb://mongo:27017/
-
+      MONGO_URI: mongodb://mongo:27017/
+      JWT_SECRET_KEY: supersegreto123
   configs-service:
     build:
       context: ../configs_service
@@ -48,8 +48,8 @@ services:
       - "8004:8000"
     restart: on-failure
     environment:
-      - MONGO_URI=mongodb://mongo:27017/
-      - JWT_SECRET_KEY=supersegreto123
+      MONGO_URI: mongodb://mongo:27017/
+      JWT_SECRET_KEY: supersegreto123
     depends_on:
       - mongo
       - user-service

@@ -50,9 +50,9 @@ def login_json(user_data: UserLogin):
     return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/me")
-def get_me(current_user = Depends(get_current_user)):
+def get_me(token: str = Depends(oauth2_scheme)):
     """Endpoint per ottenere le informazioni dell'utente corrente"""
-    return current_user
+    return get_current_user(token)
 
 @router.get("/{user_id}")
 def get_user_by_id(user_id: str):

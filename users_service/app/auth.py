@@ -1,3 +1,4 @@
+import os
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -11,7 +12,7 @@ def verify_password(plain: str, hashed: str):
     return pwd_context.verify(plain, hashed)
 
 # JWT
-SECRET_KEY = "supersegreto123"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersegreto123")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -56,7 +57,7 @@ def get_current_user(token: str = None):
         return {
             "user_id": user_id,
             "email": email,
-            "username": user.get("username")
+            "username": user.get("username") or user.get("email") or ""
         }
     except JWTError:
         raise HTTPException(status_code=401, detail="Token non valido")

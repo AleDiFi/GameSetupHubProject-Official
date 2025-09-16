@@ -1,3 +1,4 @@
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from app.models import CommentCreate, LikeCreate, ValutationCreate
 from app.models import CommentUpdate
@@ -11,14 +12,47 @@ router = APIRouter()
 @router.post("/config/{config_id}/comment")
 def add_comment(config_id: str, comment: CommentCreate, user=Depends(get_current_user)):
     """Aggiungi un commento a una configurazione"""
+    # Recupera username tramite chiamata HTTP al servizio utenti
+    USERS_SERVICE_URL = "http://infra-user-service-1:8000"
+    username = ""
+    resp = requests.get(f"{USERS_SERVICE_URL}/users/{user['user_id']}")
+    if resp.ok:
+        data = resp.json()
+        username = data.get("username", "")
     comment_doc = {
         "config_id": config_id,
         "user_id": user["user_id"],
+        "username": username,
         "comment": comment.comment,
         "created_at": datetime.now()
     }
+    if comment.parent_id is not None:
+        comment_doc["parent_id"] = comment.parent_id
     result = comments_collection.insert_one(comment_doc)
     return {"message": "Comment added", "id": str(result.inserted_id)}
+
+# Endpoint per ottenere i commenti in struttura gerarchica (thread)
+@router.get("/config/{config_id}/comments")
+def get_comments_thread(config_id: str):
+    """Restituisce tutti i commenti di una configurazione in formato gerarchico (thread)"""
+    from bson import ObjectId
+    # Recupera tutti i commenti per la configurazione
+    comments = list(comments_collection.find({"config_id": config_id}))
+    # Prepara dizionario id->commento
+    comment_map = {}
+    for c in comments:
+        c["id"] = str(c.pop("_id"))
+        c["replies"] = []
+        comment_map[c["id"]] = c
+    # Costruisci la gerarchia
+    root_comments = []
+    for c in comment_map.values():
+        parent_id = c.get("parent_id")
+        if parent_id and parent_id in comment_map:
+            comment_map[parent_id]["replies"].append(c)
+        else:
+            root_comments.append(c)
+    return {"comments": root_comments}
 
 # Rotte per like (Solo POST)
 @router.post("/config/{config_id}/like")
@@ -86,9 +120,19 @@ def delete_comment(comment_id: str, user=Depends(get_current_user)):
     if comment["user_id"] != user["user_id"]:
         raise HTTPException(status_code=403, detail="Non puoi eliminare commenti di altri utenti")
     
-    # Elimina il commento
+    # Funzione ricorsiva per eliminare tutti i figli
+    def delete_children(parent_id):
+        children = list(comments_collection.find({"parent_id": parent_id}))
+        for child in children:
+            child_id = child["_id"]
+            comments_collection.delete_one({"_id": child_id})
+            delete_children(str(child_id))
+
+    # Elimina tutti i figli
+    delete_children(comment_id)
+    # Elimina il commento padre
     comments_collection.delete_one({"_id": ObjectId(comment_id)})
-    return {"message": "Comment deleted"}
+    return {"message": "Comment and replies deleted"}
 
 
 # Endpoint per modificare un commento (PUT)

@@ -1,5 +1,36 @@
 // Configuration Detail Page JavaScript
 class ConfigurationDetail {
+    showReplyForm(parentId) {
+        // Rimuovi eventuali altri form di risposta
+        document.querySelectorAll('.reply-form').forEach(f => f.remove());
+        const parentEl = document.getElementById(`comment-body-${parentId}`);
+        if (!parentEl) return;
+        const formHtml = `
+            <form class="reply-form mt-2" onsubmit="configDetail.handleReplySubmit(event, '${parentId}')">
+                <div class="mb-2">
+                    <textarea class="form-control" name="replyText" rows="2" placeholder="Scrivi una risposta..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Invia risposta</button>
+                <button type="button" class="btn btn-link btn-sm" onclick="this.closest('.reply-form').remove()">Annulla</button>
+            </form>
+        `;
+        parentEl.insertAdjacentHTML('afterend', formHtml);
+    }
+
+    async handleReplySubmit(e, parentId) {
+        e.preventDefault();
+        const form = e.target;
+        const text = form.replyText.value.trim();
+        if (!text) return;
+        try {
+            await apiClient.addComment(this.configId, { comment: text, parent_id: parentId });
+            apiClient.showSuccess('Risposta inviata');
+            this.loadComments();
+        } catch (err) {
+            apiClient.showError('Errore nell\'invio della risposta');
+        }
+        form.remove();
+    }
     constructor() {
         this.configId = null;
         this.configuration = null;
@@ -371,37 +402,35 @@ class ConfigurationDetail {
 
     async loadComments() {
         const commentsList = document.getElementById('commentsList');
-        const comments = this.configuration && this.configuration.comments ? this.configuration.comments : [];
-
-        if (comments.length === 0) {
-            commentsList.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Nessun commento ancora.</p>
-                    <button class="btn btn-outline-primary" onclick="configDetail.showCommentForm()">
-                        <i class="fas fa-plus me-2"></i>
-                        Aggiungi il primo commento
-                    </button>
-                </div>
-            `;
-            // Aggiorna contatore commenti
-            const cntEl = document.getElementById('commentsCount');
-            if (cntEl) cntEl.textContent = `(0)`;
+        // Chiamata API per ottenere i commenti thread
+        let comments = [];
+        try {
+            const response = await fetch(`${API_CONFIG.VALUATIONS_SERVICE}/valutations/config/${this.configId}/comments`, {
+                method: 'GET',
+                headers: apiClient.getHeaders()
+            });
+            const data = await response.json();
+            comments = data.comments || [];
+        } catch (e) {
+            commentsList.innerHTML = `<div class="text-danger">Errore nel caricamento commenti</div>`;
             return;
         }
 
-        // Costruisci HTML per i commenti e mostra sempre CTA per aggiungere un commento
-        const addButtonHtml = `
-            <div class="mb-3 text-end">
-                <button class="btn btn-outline-primary btn-sm" onclick="configDetail.showCommentForm()">
-                    <i class="fas fa-plus me-1"></i> Aggiungi Commento
-                </button>
-            </div>
-        `;
+        // Funzione di escape base per evitare injection e rotture template
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
 
-        commentsList.innerHTML = addButtonHtml + comments.map(comment => {
-            const author = comment.username || comment.user_id || 'Utente';
-            const text = comment.comment || comment.text || '';
+        // Render ricorsivo dei commenti thread
+        function renderCommentThread(comment, level = 0) {
+            const author = escapeHtml(comment.username || comment.email || comment.user_id || 'Utente');
+            const text = escapeHtml(comment.comment || comment.text || '');
             let createdAt = '';
             if (comment.created_at) {
                 try {
@@ -410,19 +439,24 @@ class ConfigurationDetail {
                     createdAt = String(comment.created_at);
                 }
             }
-
-            // Add edit/delete controls if the current user is the author
             const currentUser = authManager.getCurrentUser();
-            const isAuthor = currentUser && currentUser.user_id && (currentUser.user_id === comment.user_id || currentUser.user_id === comment.userId || currentUser.user_id === comment.userIdStr);
-
+            const isAuthor = currentUser && currentUser.user_id && (currentUser.user_id === comment.user_id);
+            let repliesHtml = '';
+            let toggleHtml = '';
+            const hasReplies = comment.replies && comment.replies.length > 0;
+            const collapsedId = `collapsed-${comment.id}`;
+            if (hasReplies) {
+                toggleHtml = `<span class="comment-toggle" onclick="configDetail.toggleReplies('${comment.id}')" id="toggle-${comment.id}">Mostra risposte (${comment.replies.length})</span>`;
+                repliesHtml = `<div class="comment-replies" id="${collapsedId}">${comment.replies.map(r => renderCommentThread(r, level + 1)).join('')}</div>`;
+            }
             return `
                 <div class="comment-item mb-3" id="comment-${comment.id}">
                     <div class="d-flex gap-3">
                         <div class="author-avatar-wrapper" style="width:48px;height:48px;">
                             ${comment.avatar_url ? 
-                                `<img src="${comment.avatar_url}" alt="avatar" class="author-avatar-img rounded-circle" width="48" height="48">` :
+                                `<img src="${escapeHtml(comment.avatar_url)}" alt="avatar" class="author-avatar-img rounded-circle" width="48" height="48">` :
                                 `<div class="author-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                                    <strong>${(author || 'U').charAt(0).toUpperCase()}</strong>
+                                    <strong>${author.charAt(0).toUpperCase()}</strong>
                                 </div>`
                             }
                         </div>
@@ -435,23 +469,76 @@ class ConfigurationDetail {
                                 ${isAuthor ? `
                                     <div class="comment-actions">
                                         <button class="btn btn-sm btn-link text-danger" onclick="configDetail.handleDeleteComment('${comment.id}')">Elimina</button>
-                                        <button class="btn btn-sm btn-link" onclick="configDetail.startEditComment('${comment.id}', ${JSON.stringify(text)})">Modifica</button>
+                                        <button class="btn btn-sm btn-link" onclick="configDetail.startEditComment('${comment.id}', ${JSON.stringify(comment.comment || comment.text || '').replace(/'/g, "&#39;").replace(/"/g, '&quot;')})">Modifica</button>
                                     </div>
                                 ` : ''}
+                                <button class="btn btn-sm btn-link" onclick="configDetail.showReplyForm('${comment.id}')">Rispondi</button>
                             </div>
                             <div id="comment-body-${comment.id}">
                                 <p class="mb-0 mt-2" id="comment-text-${comment.id}">${text}</p>
                             </div>
+                            ${toggleHtml}
+                            ${repliesHtml}
                         </div>
                     </div>
                 </div>
             `;
-        }).join('');
+        }
 
-        // Aggiorna contatore commenti (usa comment_count se disponibile)
+        // Logica toggle/collapse risposte
+        window.configDetail = window.configDetail || {};
+        window.configDetail.toggleReplies = function(commentId) {
+            const repliesDiv = document.getElementById(`collapsed-${commentId}`);
+            const toggleBtn = document.getElementById(`toggle-${commentId}`);
+            if (!repliesDiv || !toggleBtn) return;
+            if (repliesDiv.style.display === 'none') {
+                repliesDiv.style.display = '';
+                toggleBtn.textContent = toggleBtn.textContent.replace('Mostra', 'Nascondi');
+            } else {
+                repliesDiv.style.display = 'none';
+                toggleBtn.textContent = toggleBtn.textContent.replace('Nascondi', 'Mostra');
+            }
+        }
+
+        // Costruisci HTML per i commenti e mostra sempre CTA per aggiungere un commento
+        const addButtonHtml = `
+            <div class="mb-3 text-end">
+                <button class="btn btn-outline-primary btn-sm" onclick="configDetail.showCommentForm()">
+                    <i class="fas fa-plus me-1"></i> Aggiungi Commento
+                </button>
+            </div>
+        `;
+
+        if (comments.length === 0) {
+            commentsList.innerHTML = `
+                ${addButtonHtml}
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nessun commento ancora.</p>
+                </div>
+            `;
+            const cntEl = document.getElementById('commentsCount');
+            if (cntEl) cntEl.textContent = `(0)`;
+            return;
+        }
+
+        commentsList.innerHTML = addButtonHtml + comments.map(c => renderCommentThread(c)).join('');
+        // Aggiorna contatore commenti (tutti, inclusi figli)
         const cntEl2 = document.getElementById('commentsCount');
-        const commentsCount = this.configuration && (this.configuration.comments_count ?? comments.length);
+        const commentsCount = this.countAllComments(comments);
         if (cntEl2) cntEl2.textContent = `(${commentsCount})`;
+    }
+
+    // Funzione ricorsiva per contare tutti i commenti (padri + figli)
+    countAllComments(comments) {
+        let count = 0;
+        for (const c of comments) {
+            count++;
+            if (c.replies && c.replies.length > 0) {
+                count += this.countAllComments(c.replies);
+            }
+        }
+        return count;
     }
 
     async handleDeleteComment(commentId) {
@@ -470,11 +557,22 @@ class ConfigurationDetail {
     startEditComment(commentId, currentText) {
         const bodyEl = document.getElementById(`comment-body-${commentId}`);
         if (!bodyEl) return;
+        // Escape per evitare rotture/injection
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+        const safeText = escapeHtml(currentText);
         bodyEl.innerHTML = `
             <div class="d-flex flex-column">
-                <textarea id="edit-text-${commentId}" class="form-control mb-2" rows="3">${currentText}</textarea>
+                <textarea id="edit-text-${commentId}" class="form-control mb-2" rows="3">${safeText}</textarea>
                 <div class="d-flex justify-content-end gap-2">
-                    <button class="btn btn-secondary btn-sm" onclick="configDetail.cancelEditComment('${commentId}', ${JSON.stringify(currentText)})">Annulla</button>
+                    <button class="btn btn-secondary btn-sm" onclick="configDetail.cancelEditComment('${commentId}', ${JSON.stringify(currentText).replace(/'/g, "&#39;").replace(/"/g, '&quot;')})">Annulla</button>
                     <button class="btn btn-primary btn-sm" onclick="configDetail.saveEditComment('${commentId}')">Salva</button>
                 </div>
             </div>
@@ -536,7 +634,7 @@ class ConfigurationDetail {
         submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Invio...';
         
         try {
-            await apiClient.addComment(this.configId, commentText);
+            await apiClient.addComment(this.configId, { comment: commentText });
             apiClient.showSuccess('Commento aggiunto con successo!');
 
             // Ricarica i dettagli aggiornati (comments incluse)
@@ -606,6 +704,7 @@ class ConfigurationDetail {
         }
         const likeBtn = document.getElementById('likeBtn');
         const likeText = document.getElementById('likeText');
+        const heartIcon = likeBtn.querySelector('i.fas.fa-heart');
         const originalText = likeBtn.innerHTML;
         likeBtn.disabled = true;
         likeBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>...';
@@ -621,12 +720,16 @@ class ConfigurationDetail {
             this.userHasLiked = liked_by.includes(userData.user_id);
             if (this.userHasLiked) {
                 likeText.textContent = 'Ti Piace';
-                likeBtn.classList.remove('btn-primary');
-                likeBtn.classList.add('btn-success');
+                if (heartIcon) {
+                  heartIcon.classList.add('liked');
+                  heartIcon.style.color = '#e25555';
+                }
             } else {
                 likeText.textContent = 'Mi Piace';
-                likeBtn.classList.remove('btn-success');
-                likeBtn.classList.add('btn-primary');
+                if (heartIcon) {
+                  heartIcon.classList.remove('liked');
+                  heartIcon.style.color = '#bbb';
+                }
             }
         } catch (error) {
             apiClient.showError('Errore nell\'operazione: ' + error.message);
@@ -1099,4 +1202,18 @@ document.head.appendChild(style);
 // Inizializza la pagina quando il DOM è pronto
 document.addEventListener('DOMContentLoaded', () => {
     window.configDetail = new ConfigurationDetail();
+});
+// Gestione cuore mi piace
+document.addEventListener('DOMContentLoaded', function() {
+    const heart = document.getElementById('likeHeart');
+    const likeText = document.getElementById('likeText');
+    let liked = false;
+    if (heart) {
+        heart.addEventListener('click', function() {
+            liked = !liked;
+            heart.classList.toggle('liked', liked);
+            heart.innerHTML = liked ? '\u2665' : '\u2661';
+            likeText.textContent = liked ? 'Ti piace!' : 'Mi piace';
+        });
+    }
 });

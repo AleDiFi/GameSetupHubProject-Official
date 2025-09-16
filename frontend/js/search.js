@@ -193,26 +193,23 @@ class SearchPage {
 
     async performSearch() {
         this.searchStartTime = Date.now();
-        
         // Raccogli parametri di ricerca
         const searchParams = this.getSearchParams();
-        
         // Mostra loading
         this.showLoading();
-        
         try {
             let results = [];
-            
             // Se non ci sono filtri, non fare ricerca
             if (!this.hasActiveFilters(searchParams)) {
                 this.showInitialState();
                 return;
             }
-            
             // Prova prima con il servizio di visualizzazioni avanzate
             try {
                 if (await apiClient.checkVisualizationsService()) {
-                    results = await this.performAdvancedSearch(searchParams);
+                    const advRes = await this.performAdvancedSearch(searchParams);
+                    // Se la risposta ha la proprietà 'configs', usala
+                    results = Array.isArray(advRes?.configs) ? advRes.configs : advRes;
                 } else {
                     throw new Error('Servizio visualizzazioni non disponibile');
                 }
@@ -220,18 +217,14 @@ class SearchPage {
                 console.warn('Ricerca avanzata fallita, uso ricerca base:', error);
                 results = await this.performBasicSearch(searchParams);
             }
-            
             // Applica filtri locali se necessario
             results = this.applyLocalFilters(results, searchParams);
-            
             // Salva e mostra risultati
             this.searchResults = results;
             this.totalResults = results.length;
             this.currentPage = 1;
-            
             this.displayResults();
             this.updateSearchStats();
-            
         } catch (error) {
             console.error('Errore nella ricerca:', error);
             this.showError('Errore nella ricerca: ' + error.message);
@@ -306,12 +299,14 @@ class SearchPage {
             );
         }
         
-        // Filtro per rating (placeholder - non abbiamo rating reali)
+        // Filtro per rating medio reale
         if (params.minRating > 0) {
-            // Simula rating basato su lunghezza descrizione e presenza tags
             filtered = filtered.filter(config => {
-                const fakeRating = this.calculateFakeRating(config);
-                return fakeRating >= params.minRating;
+                if (typeof config.average_rating === 'number') {
+                    return config.average_rating >= params.minRating;
+                }
+                // Se non c'è valutazione media, non mostrare
+                return false;
             });
         }
         
@@ -442,9 +437,8 @@ class SearchPage {
     }
 
     generateGridCard(config) {
-        const fakeRating = this.calculateFakeRating(config);
+        const rating = typeof config.average_rating === 'number' ? config.average_rating : null;
         const truncatedDescription = apiClient.truncateText(config.description || 'Nessuna descrizione disponibile', 100);
-        
         return `
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="config-card search-result-card">
@@ -457,7 +451,6 @@ class SearchPage {
                     </div>
                     <div class="config-body">
                         <p class="config-description">${truncatedDescription}</p>
-                        
                         ${config.tags && config.tags.length > 0 ? `
                             <div class="config-tags">
                                 ${config.tags.slice(0, 4).map(tag => 
@@ -466,12 +459,11 @@ class SearchPage {
                                 ${config.tags.length > 4 ? `<span class="config-tag">+${config.tags.length - 4}</span>` : ''}
                             </div>
                         ` : ''}
-                        
                         <div class="config-stats">
                             <div class="config-stat">
                                 <div class="rating">
-                                    ${apiClient.generateStarRating(fakeRating)}
-                                    <small class="ms-1">${fakeRating.toFixed(1)}</small>
+                                    ${rating !== null ? apiClient.generateStarRating(rating) : apiClient.generateStarRating(0)}
+                                    <small class="ms-1">${rating !== null ? rating.toFixed(1) : 'N/A'}</small>
                                 </div>
                             </div>
                             <div class="config-stat">
@@ -479,7 +471,6 @@ class SearchPage {
                                 <small>${config.created_at ? apiClient.formatDate(config.created_at) : 'Data N/A'}</small>
                             </div>
                         </div>
-                        
                         <div class="config-actions">
                             <button class="btn btn-primary btn-sm" onclick="searchPage.viewConfiguration('${config._id}')">
                                 <i class="fas fa-eye me-1"></i>
@@ -497,9 +488,8 @@ class SearchPage {
     }
 
     generateListCard(config) {
-        const fakeRating = this.calculateFakeRating(config);
+        const rating = typeof config.average_rating === 'number' ? config.average_rating : null;
         const truncatedDescription = apiClient.truncateText(config.description || 'Nessuna descrizione disponibile', 200);
-        
         return `
             <div class="list-item-card mb-3">
                 <div class="row">
@@ -511,7 +501,6 @@ class SearchPage {
                                 ${config.game || 'Gioco non specificato'}
                             </p>
                             <p class="list-item-description">${truncatedDescription}</p>
-                            
                             ${config.tags && config.tags.length > 0 ? `
                                 <div class="list-item-tags">
                                     ${config.tags.slice(0, 6).map(tag => 
@@ -525,8 +514,8 @@ class SearchPage {
                     <div class="col-md-4">
                         <div class="list-item-meta">
                             <div class="rating mb-2">
-                                ${apiClient.generateStarRating(fakeRating)}
-                                <small class="ms-1">${fakeRating.toFixed(1)}</small>
+                                ${rating !== null ? apiClient.generateStarRating(rating) : apiClient.generateStarRating(0)}
+                                <small class="ms-1">${rating !== null ? rating.toFixed(1) : 'N/A'}</small>
                             </div>
                             <p class="text-muted small mb-3">
                                 <i class="fas fa-clock me-1"></i>
