@@ -83,6 +83,33 @@ docs/                  → Documentazione tecnica e diagrammi
 
 ## Utilizzo
 
+### Autenticazione (Registrazione e Login)
+
+**Input:**
+
+- **Registrazione:**  
+  - Username  
+  - Email  
+  - Password
+
+- **Login:**  
+  - Username o Email  
+  - Password
+
+**Output:**
+
+- **Registrazione:**
+  - Conferma di avvenuta registrazione (messaggio di successo)
+  - Creazione del profilo utente
+
+- **Login:**
+  - Token di autenticazione (JWT)  
+  - Messaggio di login avvenuto con successo  
+  - Accesso alle funzionalità riservate agli utenti autenticati (upload, commenti, like, ecc.)
+
+**Esempio:**  
+Dopo aver inserito le credenziali nel form di login, l’utente riceve un pop-up di conferma e può accedere alle funzionalità avanzate della piattaforma.
+
 ### Upload Configurazioni
 
 - **Input**: nome del gioco, parametri chiave-valore (es. risoluzione, FPS, ecc.), tag descrittivi  
@@ -100,6 +127,7 @@ docs/                  → Documentazione tecnica e diagrammi
 
 - Ogni configurazione può ricevere Mi piace, commenti e valutazione  
 - Funzionalità gestite dal servizio `valutation_service`  
+- Possibilità di rispondere a commenti già presenti a mo' di Thread
 - **Output**: numero di Mi piace, valutazione media e lista dei commenti
 
 ### Login
