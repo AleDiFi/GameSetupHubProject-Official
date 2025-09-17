@@ -219,9 +219,14 @@ class SearchPage {
             }
             // Applica filtri locali se necessario
             results = this.applyLocalFilters(results, searchParams);
-            // Salva e mostra risultati
-            this.searchResults = results;
-            this.totalResults = results.length;
+            // Normalizza gli ID delle configurazioni
+            this.searchResults = results.map(config => {
+                if (config && !config._id && config.id) {
+                    config._id = config.id;
+                }
+                return config;
+            });
+            this.totalResults = this.searchResults.length;
             this.currentPage = 1;
             this.displayResults();
             this.updateSearchStats();
